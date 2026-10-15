@@ -1,0 +1,1520 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="시민권 면접">
+    <meta name="format-detection" content="telephone=no">
+    <title>미국 시민권 면접 준비 v2</title>
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --primary-dark: #3730a3;
+            --bg-gradient: linear-gradient(145deg, #1e1b4b 0%, #312e81 40%, #1e3a8a 100%);
+            --card-bg: #ffffff;
+            --text-main: #0f172a;
+            --text-sub: #475569;
+            --border-color: #e2e8f0;
+            --success: #059669;
+            --danger: #ef4444;
+            --safe-top: env(safe-area-inset-top, 0px);
+            --safe-bottom: env(safe-area-inset-bottom, 0px);
+            --safe-left: env(safe-area-inset-left, 0px);
+            --safe-right: env(safe-area-inset-right, 0px);
+        }
+
+        /* 다크 모드 */
+        body.dark-mode {
+            --bg-gradient: linear-gradient(145deg, #0f172a 0%, #1e293b 100%);
+            --card-bg: #1e293b;
+            --text-main: #f1f5f9;
+            --text-sub: #cbd5e1;
+            --border-color: #334155;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Arial, sans-serif;
+            background: var(--bg-gradient);
+            color: var(--text-main);
+            min-height: 100vh;
+            padding: calc(var(--safe-top) + 16px) calc(var(--safe-right) + 16px) calc(var(--safe-bottom) + 20px) calc(var(--safe-left) + 16px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            -webkit-font-smoothing: antialiased;
+            overflow-x: hidden;
+            touch-action: pan-y;
+            transition: background 0.3s ease;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 680px;
+            background: var(--card-bg);
+            border-radius: 28px;
+            box-shadow: 0 20px 45px rgba(0, 0, 0, 0.35);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            transition: background-color 0.3s ease;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            color: #ffffff;
+            padding: 20px 22px 16px;
+            text-align: center;
+            position: relative;
+        }
+
+        .header h1 {
+            font-size: 20px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .header p {
+            color: #94a3b8;
+            font-size: 13px;
+            margin-top: 6px;
+        }
+
+        /* 다크모드 토글 버튼 */
+        .dark-toggle {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 6px 10px;
+            border-radius: 20px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .dark-toggle:active {
+            transform: scale(0.95);
+        }
+
+        .progress-bar-track {
+            background: var(--border-color);
+            height: 6px;
+        }
+
+        .progress-fill {
+            background: linear-gradient(90deg, #6366f1, #3b82f6);
+            height: 100%;
+            transition: width 0.25s ease-out;
+        }
+
+        .content {
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        /* 검색 바 */
+        .search-bar {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            background: var(--card-bg);
+            border: 1.5px solid var(--border-color);
+            border-radius: 14px;
+            padding: 11px 14px;
+            transition: border-color 0.2s ease;
+        }
+
+        .search-bar:focus-within {
+            border-color: var(--primary);
+        }
+
+        .search-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            outline: none;
+            color: var(--text-main);
+            font-size: 16px;
+            font-family: inherit;
+        }
+
+        .search-input::placeholder {
+            color: var(--text-sub);
+        }
+
+        .search-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-sub);
+            font-size: 16px;
+            cursor: pointer;
+            padding: 0 4px;
+        }
+
+        .filter-row {
+            display: flex;
+            gap: 6px;
+            overflow-x: auto;
+            padding-bottom: 4px;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .filter-btn {
+            flex-shrink: 0;
+            padding: 7px 10px;
+            background: var(--card-bg);
+            color: var(--text-sub);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            user-select: none;
+            transition: all 0.15s ease;
+        }
+
+        .filter-btn.active {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: #ffffff;
+        }
+
+        .filter-btn.active-wrong {
+            background: #dc2626;
+            border-color: #dc2626;
+            color: #ffffff;
+        }
+
+        .filter-btn.active-autoplay {
+            background: #059669;
+            border-color: #059669;
+            color: #ffffff;
+            animation: pulsePlay 1.5s infinite ease-in-out;
+        }
+
+        @keyframes pulsePlay {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.8; }
+        }
+
+        /* 속도 조절 버튼들 */
+        .speed-controls {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+        }
+
+        .speed-btn {
+            padding: 6px 10px;
+            background: var(--card-bg);
+            color: var(--text-sub);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            font-size: 11px;
+            font-weight: 700;
+            cursor: pointer;
+            user-select: none;
+            transition: all 0.15s ease;
+        }
+
+        .speed-btn.active {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: #ffffff;
+        }
+
+        .meta-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .badges-wrap {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .question-number {
+            background: #ede9fe;
+            color: #4338ca;
+            padding: 5px 12px;
+            border-radius: 9999px;
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .important-badge {
+            background: #fee2e2;
+            color: #b91c1c;
+            padding: 5px 10px;
+            border-radius: 9999px;
+            font-size: 11px;
+            font-weight: 700;
+        }
+
+        .wrong-badge {
+            background: #fef2f2;
+            color: #ef4444;
+            border: 1px solid #fecaca;
+            padding: 4px 9px;
+            border-radius: 9999px;
+            font-size: 11px;
+            font-weight: 700;
+            display: none;
+        }
+
+        .wrong-badge.show {
+            display: inline-flex;
+        }
+
+        .voice-btn {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            color: var(--text-sub);
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            user-select: none;
+            transition: all 0.15s ease;
+        }
+
+        .voice-btn.playing {
+            background: #fee2e2;
+            border-color: #fca5a5;
+            color: #b91c1c;
+            animation: pulsePlay 1.2s infinite ease-in-out;
+        }
+
+        .question-box {
+            min-height: 84px;
+            display: flex;
+            align-items: center;
+        }
+
+        .question-text {
+            font-size: 20px;
+            line-height: 1.45;
+            color: var(--text-main);
+            font-weight: 700;
+        }
+
+        .answer-card {
+            background: var(--card-bg);
+            border: 1.5px solid var(--border-color);
+            border-radius: 18px;
+            padding: 18px 20px;
+            display: none;
+            animation: fadeIn 0.2s ease-out;
+        }
+
+        .answer-card.visible {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-4px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .answer-label {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            color: var(--success);
+            font-size: 13px;
+            font-weight: 700;
+            margin-bottom: 12px;
+        }
+
+        .answer-content {
+            font-size: 17px;
+            color: var(--text-main);
+            line-height: 1.6;
+            font-weight: 500;
+        }
+
+        .note-card {
+            background: #fffbeb;
+            border-left: 4px solid #f59e0b;
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-size: 13px;
+            color: #92400e;
+        }
+
+        body.dark-mode .note-card {
+            background: rgba(245, 158, 11, 0.1);
+            color: #fbbf24;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 10px;
+            color: var(--text-sub);
+        }
+
+        .swipe-hint {
+            text-align: center;
+            font-size: 11px;
+            color: var(--text-sub);
+            margin-top: -6px;
+        }
+
+        .main-controls {
+            display: grid;
+            grid-template-columns: 1fr 1.6fr 1fr;
+            gap: 10px;
+        }
+
+        .btn {
+            border: none;
+            border-radius: 16px;
+            padding: 14px 10px;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            user-select: none;
+            transition: all 0.12s ease;
+        }
+
+        .btn:active:not(:disabled) {
+            transform: scale(0.96);
+        }
+
+        .btn:disabled {
+            opacity: 0.35;
+            cursor: not-allowed;
+        }
+
+        .btn-nav {
+            background: var(--border-color);
+            color: var(--text-sub);
+        }
+
+        .btn-reveal {
+            background: var(--success);
+            color: #ffffff;
+            box-shadow: 0 4px 12px rgba(5, 150, 105, 0.25);
+        }
+
+        .btn-reveal.shown {
+            background: #475569;
+            box-shadow: none;
+        }
+
+        .footer-stats {
+            background: var(--card-bg);
+            border-top: 1px solid var(--border-color);
+            padding: 14px 16px;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            text-align: center;
+        }
+
+        .stat-item {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            user-select: none;
+        }
+
+        .stat-val {
+            font-size: 20px;
+            font-weight: 800;
+            color: var(--text-main);
+        }
+
+        .stat-lbl {
+            font-size: 12px;
+            color: var(--text-sub);
+            margin-top: 3px;
+            font-weight: 600;
+        }
+
+        .stat-item-interactive {
+            cursor: pointer;
+            padding: 8px 12px;
+            border-radius: 14px;
+            background: var(--border-color);
+            transition: all 0.2s;
+        }
+
+        .stat-item-interactive:active {
+            transform: scale(0.94);
+        }
+
+        .stat-item-interactive.is-wrong {
+            background: #fee2e2;
+        }
+
+        .stat-item-interactive.is-wrong .stat-val {
+            color: #dc2626;
+        }
+
+        .stat-subhint {
+            font-size: 10px;
+            color: var(--text-sub);
+            margin-top: 1px;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: calc(var(--safe-bottom) + 20px);
+            left: 50%;
+            transform: translateX(-50%) translateY(30px);
+            background: rgba(15, 23, 42, 0.92);
+            backdrop-filter: blur(8px);
+            color: #ffffff;
+            padding: 10px 18px;
+            border-radius: 9999px;
+            font-size: 13px;
+            font-weight: 600;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.25s ease-out;
+            z-index: 1000;
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        /* 검색 결과 */
+        .search-results {
+            max-height: 200px;
+            overflow-y: auto;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            margin-top: -10px;
+            display: none;
+        }
+
+        .search-results.show {
+            display: block;
+        }
+
+        .search-result-item {
+            padding: 12px 14px;
+            border-bottom: 1px solid var(--border-color);
+            cursor: pointer;
+            transition: background 0.15s ease;
+        }
+
+        .search-result-item:hover {
+            background: rgba(79, 70, 229, 0.05);
+        }
+
+        .search-result-item:last-child {
+            border-bottom: none;
+        }
+
+        .search-result-q {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-main);
+            margin-bottom: 4px;
+        }
+
+        .search-result-a {
+            font-size: 12px;
+            color: var(--text-sub);
+        }
+    </style>
+</head>
+<body>
+    <div class="container" id="cardContainer">
+        <header class="header">
+            <button class="dark-toggle" id="darkToggle">🌙</button>
+            <h1>🇺🇸 U.S. Citizenship Civics</h1>
+            <p>2008년형 · Northbrook, IL · 2026년 기준</p>
+        </header>
+
+        <div class="progress-bar-track">
+            <div class="progress-fill" id="progressBar" style="width: 1%;"></div>
+        </div>
+
+        <div class="content">
+            <!-- 검색 바 -->
+            <div class="search-bar">
+                <input type="text" class="search-input" id="searchInput" placeholder="질문 검색 (예: President, Constitution)">
+                <button class="search-btn" id="searchBtn">🔍</button>
+            </div>
+
+            <!-- 검색 결과 -->
+            <div class="search-results" id="searchResults"></div>
+
+            <div class="filter-row">
+                <button class="filter-btn" id="randomBtn">🔀 랜덤</button>
+                <button class="filter-btn" id="importantBtn">⭐ 핵심</button>
+                <button class="filter-btn" id="wrongOnlyBtn">❌ 오답</button>
+                <button class="filter-btn" id="autoplayBtn">▶️ 자동</button>
+            </div>
+
+            <!-- 속도 조절 -->
+            <div class="speed-controls">
+                <span style="font-size: 11px; color: var(--text-sub); font-weight: 600;">속도:</span>
+                <button class="speed-btn" data-speed="0.7">0.7x</button>
+                <button class="speed-btn" data-speed="0.85">0.85x</button>
+                <button class="speed-btn active" data-speed="1.0">1.0x</button>
+                <button class="speed-btn" data-speed="1.3">1.3x</button>
+            </div>
+
+            <div class="meta-row">
+                <div class="badges-wrap">
+                    <span class="question-number" id="questionNumber">Q.1</span>
+                    <span class="important-badge" id="importantBadge">자주 출제</span>
+                    <span class="wrong-badge" id="wrongBadge">❌ 오답</span>
+                </div>
+                <button class="voice-btn" id="ttsBtn">🔊 영문 듣기</button>
+            </div>
+
+            <div class="question-box">
+                <div class="question-text" id="questionText">What is the supreme law of the land?</div>
+            </div>
+
+            <div class="answer-card" id="answerCard">
+                <div class="answer-label">
+                    <span>✓ Answer (정답)</span>
+                    <button class="voice-btn" id="ttsAnsBtn" style="padding: 4px 10px; font-size: 12px;">🔊 정답 듣기</button>
+                </div>
+                <div class="answer-content" id="answerText">the Constitution</div>
+            </div>
+
+            <div id="noteContainer"></div>
+
+            <p class="swipe-hint">💡 좌우 스와이프 또는 버튼으로 이동</p>
+
+            <div class="main-controls">
+                <button class="btn btn-nav" id="prevBtn" disabled>◀ 이전</button>
+                <button class="btn btn-reveal" id="answerBtn">정답 확인</button>
+                <button class="btn btn-nav" id="nextBtn">다음 ▶</button>
+            </div>
+        </div>
+
+        <footer class="footer-stats">
+            <div class="stat-item">
+                <div class="stat-val" id="statTotal">100</div>
+                <div class="stat-lbl">총 문항수</div>
+            </div>
+            <div class="stat-item stat-item-interactive" id="wrongToggleBtn">
+                <div class="stat-val" id="statWrong">0</div>
+                <div class="stat-lbl">오답</div>
+                <div class="stat-subhint">탭하여 토글</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-val" id="statCurrent">1</div>
+                <div class="stat-lbl">현재 문항</div>
+            </div>
+        </footer>
+    </div>
+
+    <div class="toast" id="toastMsg"></div>
+
+    <script>
+        var questionsData = [
+            { id: 1, question: "What is the supreme law of the land?", answer: "the Constitution", important: true },
+            { id: 2, question: "What does the Constitution do?", answer: "• sets up the government<br>• defines the government<br>• protects basic rights of Americans", important: true },
+            { id: 3, question: "The idea of self-government is in the first three words of the Constitution. What are these words?", answer: "We the People", important: true },
+            { id: 4, question: "What is an amendment?", answer: "• a change (to the Constitution)<br>• an addition (to the Constitution)", important: false },
+            { id: 5, question: "What do we call the first ten amendments to the Constitution?", answer: "the Bill of Rights", important: true },
+            { id: 6, question: "What is one right or freedom from the First Amendment?", answer: "• speech<br>• religion<br>• assembly<br>• press<br>• petition the government", important: true },
+            { id: 7, question: "How many amendments does the Constitution have?", answer: "twenty-seven (27)", important: false },
+            { id: 8, question: "What did the Declaration of Independence do?", answer: "• announced our independence (from Great Britain)<br>• declared our independence (from Great Britain)<br>• said that the United States is free (from Great Britain)", important: true },
+            { id: 9, question: "What are two rights in the Declaration of Independence?", answer: "• life<br>• liberty<br>• pursuit of happiness", important: true },
+            { id: 10, question: "What is freedom of religion?", answer: "You can practice any religion, or not practice a religion.", important: false },
+            { id: 11, question: "What is the economic system in the United States?", answer: "• capitalist economy<br>• market economy", important: false },
+            { id: 12, question: "What is the 'rule of law'?", answer: "• Everyone must follow the law.<br>• Leaders must obey the law.<br>• Government must obey the law.<br>• No one is above the law.", important: false },
+            { id: 13, question: "Name one branch or part of the government.", answer: "• Congress<br>• legislative<br>• President<br>• executive<br>• the courts<br>• judicial", important: true },
+            { id: 14, question: "What stops one branch of government from becoming too powerful?", answer: "• checks and balances<br>• separation of powers", important: true },
+            { id: 15, question: "Who is in charge of the executive branch?", answer: "the President", important: true },
+            { id: 16, question: "Who makes federal laws?", answer: "• Congress<br>• Senate and House (of Representatives)<br>• (U.S. or national) legislature", important: true },
+            { id: 17, question: "What are the two parts of the U.S. Congress?", answer: "the Senate and House (of Representatives)", important: true },
+            { id: 18, question: "How many U.S. Senators are there?", answer: "one hundred (100)", important: true },
+            { id: 19, question: "We elect a U.S. Senator for how many years?", answer: "six (6)", important: false },
+            { id: 20, question: "Who is one of your state's U.S. Senators now?", answer: "• Tammy Duckworth<br>• Dick Durbin", important: true, note: "Illinois 주 상원의원 (2026년 기준)" },
+            { id: 21, question: "The House of Representatives has how many voting members?", answer: "four hundred thirty-five (435)", important: false },
+            { id: 22, question: "We elect a U.S. Representative for how many years?", answer: "two (2)", important: false },
+            { id: 23, question: "Name your U.S. Representative.", answer: "Brad Schneider", important: true, note: "IL 제10선거구 (Northbrook)" },
+            { id: 24, question: "Who does a U.S. Senator represent?", answer: "all people of the state", important: false },
+            { id: 25, question: "Why do some states have more Representatives than other states?", answer: "• (because of) the state's population<br>• (because) they have more people<br>• (because) some states have more people", important: false },
+            { id: 26, question: "We elect a President for how many years?", answer: "four (4)", important: true },
+            { id: 27, question: "In what month do we vote for President?", answer: "November", important: true },
+            { id: 28, question: "What is the name of the President of the United States now?", answer: "Donald J. Trump", important: true, note: "현직 미국 대통령" },
+            { id: 29, question: "What is the name of the Vice President of the United States now?", answer: "JD Vance", important: true, note: "현직 미국 부통령" },
+            { id: 30, question: "If the President can no longer serve, who becomes President?", answer: "the Vice President", important: true },
+            { id: 31, question: "If both the President and the Vice President can no longer serve, who becomes President?", answer: "the Speaker of the House", important: false },
+            { id: 32, question: "Who is the Commander in Chief of the military?", answer: "the President", important: true },
+            { id: 33, question: "Who signs bills to become laws?", answer: "the President", important: true },
+            { id: 34, question: "Who vetoes bills?", answer: "the President", important: false },
+            { id: 35, question: "What does the President's Cabinet do?", answer: "advises the President", important: false },
+            { id: 36, question: "What are two Cabinet-level positions?", answer: "• Secretary of Agriculture<br>• Secretary of Commerce<br>• Secretary of Defense<br>• Secretary of Education<br>• Secretary of Energy<br>• Secretary of Health and Human Services<br>• Secretary of Homeland Security<br>• Secretary of Housing and Urban Development<br>• Secretary of the Interior<br>• Secretary of Labor<br>• Secretary of State<br>• Secretary of Transportation<br>• Secretary of the Treasury<br>• Secretary of Veterans Affairs<br>• Attorney General<br>• Vice President", important: false },
+            { id: 37, question: "What does the judicial branch do?", answer: "• reviews laws<br>• explains laws<br>• resolves disputes (disagreements)<br>• decides if a law goes against the Constitution", important: true },
+            { id: 38, question: "What is the highest court in the United States?", answer: "the Supreme Court", important: true },
+            { id: 39, question: "How many justices are on the Supreme Court?", answer: "nine (9)", important: false },
+            { id: 40, question: "Who is the Chief Justice of the United States now?", answer: "John Roberts", important: false },
+            { id: 41, question: "Under our Constitution, some powers belong to the federal government. What is one power of the federal government?", answer: "• to print money<br>• to declare war<br>• to create an army<br>• to make treaties", important: false },
+            { id: 42, question: "Under our Constitution, some powers belong to the states. What is one power of the states?", answer: "• provide schooling and education<br>• provide protection (police)<br>• provide safety (fire departments)<br>• give a driver's license<br>• approve zoning and land use", important: false },
+            { id: 43, question: "Who is the Governor of your state now?", answer: "J.B. Pritzker", important: true, note: "Illinois 주지사" },
+            { id: 44, question: "What is the capital of your state?", answer: "Springfield", important: true, note: "Illinois 주도" },
+            { id: 45, question: "What are the two major political parties in the United States?", answer: "Democratic and Republican", important: true },
+            { id: 46, question: "What is the political party of the President now?", answer: "Republican (Party)", important: false },
+            { id: 47, question: "What is the name of the Speaker of the House of Representatives now?", answer: "Mike Johnson", important: false },
+            { id: 48, question: "There are four amendments to the Constitution about who can vote. Describe one of them.", answer: "• Citizens eighteen (18) and older (can vote).<br>• You don't have to pay (a poll tax) to vote.<br>• Any citizen can vote. (Women and men can vote.)<br>• A male citizen of any race (can vote).", important: false },
+            { id: 49, question: "What is one responsibility that is only for United States citizens?", answer: "• serve on a jury<br>• vote in a federal election", important: true },
+            { id: 50, question: "Name one right only for United States citizens.", answer: "• vote in a federal election<br>• run for federal office", important: false },
+            { id: 51, question: "What are two rights of everyone living in the United States?", answer: "• freedom of expression<br>• freedom of speech<br>• freedom of assembly<br>• freedom to petition the government<br>• freedom of religion<br>• the right to bear arms", important: false },
+            { id: 52, question: "What do we show loyalty to when we say the Pledge of Allegiance?", answer: "• the United States<br>• the flag", important: false },
+            { id: 53, question: "What is one promise you make when you become a United States citizen?", answer: "• give up loyalty to other countries<br>• defend the Constitution and laws of the United States<br>• obey the laws of the United States<br>• serve in the U.S. military (if needed)<br>• serve (do important work for) the nation (if needed)<br>• be loyal to the United States", important: true },
+            { id: 54, question: "How old do citizens have to be to vote for President?", answer: "eighteen (18) and older", important: true },
+            { id: 55, question: "What are two ways that Americans can participate in their democracy?", answer: "• vote<br>• join a political party<br>• help with a campaign<br>• join a civic group<br>• join a community group<br>• give an elected official your opinion on an issue<br>• call Senators and Representatives<br>• publicly support or oppose an issue or policy<br>• run for office<br>• write to a newspaper", important: false },
+            { id: 56, question: "When is the last day you can send in federal income tax forms?", answer: "April 15", important: true },
+            { id: 57, question: "When must all men register for the Selective Service?", answer: "• at age eighteen (18)<br>• between eighteen (18) and twenty-six (26)", important: false },
+            { id: 58, question: "What is one reason colonists came to America?", answer: "• freedom<br>• political liberty<br>• religious freedom<br>• economic opportunity<br>• practice their religion<br>• escape persecution", important: false },
+            { id: 59, question: "Who lived in America before the Europeans arrived?", answer: "• American Indians<br>• Native Americans", important: false },
+            { id: 60, question: "What group of people was taken to America and sold as slaves?", answer: "• Africans<br>• people from Africa", important: false },
+            { id: 61, question: "Why did the colonists fight the British?", answer: "• because of high taxes (taxation without representation)<br>• because the British army stayed in their houses (boarding, quartering)<br>• because they didn't have self-government", important: true },
+            { id: 62, question: "Who wrote the Declaration of Independence?", answer: "(Thomas) Jefferson", important: true },
+            { id: 63, question: "When was the Declaration of Independence adopted?", answer: "July 4, 1776", important: true },
+            { id: 64, question: "There were 13 original states. Name three.", answer: "• New Hampshire<br>• Massachusetts<br>• Rhode Island<br>• Connecticut<br>• New York<br>• New Jersey<br>• Pennsylvania<br>• Delaware<br>• Maryland<br>• Virginia<br>• North Carolina<br>• South Carolina<br>• Georgia", important: false },
+            { id: 65, question: "What happened at the Constitutional Convention?", answer: "• The Constitution was written.<br>• The Founding Fathers wrote the Constitution.", important: false },
+            { id: 66, question: "When was the Constitution written?", answer: "1787", important: false },
+            { id: 67, question: "The Federalist Papers supported the passage of the U.S. Constitution. Name one of the writers.", answer: "• (James) Madison<br>• (Alexander) Hamilton<br>• (John) Jay<br>• Publius", important: false },
+            { id: 68, question: "What is one thing Benjamin Franklin is famous for?", answer: "• U.S. diplomat<br>• oldest member of the Constitutional Convention<br>• first Postmaster General of the United States<br>• writer of 'Poor Richard's Almanac'<br>• started the first free libraries", important: false },
+            { id: 69, question: "Who is the 'Father of Our Country'?", answer: "(George) Washington", important: true },
+            { id: 70, question: "Who was the first President?", answer: "(George) Washington", important: true },
+            { id: 71, question: "What territory did the United States buy from France in 1803?", answer: "• the Louisiana Territory<br>• Louisiana", important: false },
+            { id: 72, question: "Name one war fought by the United States in the 1800s.", answer: "• War of 1812<br>• Mexican-American War<br>• Civil War<br>• Spanish-American War", important: false },
+            { id: 73, question: "Name the U.S. war between the North and the South.", answer: "• the Civil War<br>• the War between the States", important: true },
+            { id: 74, question: "Name one problem that led to the Civil War.", answer: "• slavery<br>• economic reasons<br>• states' rights", important: false },
+            { id: 75, question: "What was one important thing that Abraham Lincoln did?", answer: "• freed the slaves (Emancipation Proclamation)<br>• saved (or preserved) the Union<br>• led the United States during the Civil War", important: true },
+            { id: 76, question: "What did the Emancipation Proclamation do?", answer: "• freed the slaves<br>• freed slaves in the Confederacy<br>• freed slaves in the Confederate states<br>• freed slaves in most Southern states", important: false },
+            { id: 77, question: "What did Susan B. Anthony do?", answer: "• fought for women's rights<br>• fought for civil rights", important: false },
+            { id: 78, question: "Name one war fought by the United States in the 1900s.", answer: "• World War I<br>• World War II<br>• Korean War<br>• Vietnam War<br>• (Persian) Gulf War", important: false },
+            { id: 79, question: "Who was President during World War I?", answer: "(Woodrow) Wilson", important: false },
+            { id: 80, question: "Who was President during the Great Depression and World War II?", answer: "(Franklin) Roosevelt", important: false },
+            { id: 81, question: "Who did the United States fight in World War II?", answer: "Japan, Germany, and Italy", important: false },
+            { id: 82, question: "Before he was President, Eisenhower was a general. What war was he in?", answer: "World War II", important: false },
+            { id: 83, question: "During the Cold War, what was the main concern of the United States?", answer: "Communism", important: false },
+            { id: 84, question: "What movement tried to end racial discrimination?", answer: "civil rights (movement)", important: false },
+            { id: 85, question: "What did Martin Luther King, Jr. do?", answer: "• fought for civil rights<br>• worked for equality for all Americans", important: true },
+            { id: 86, question: "What major event happened on September 11, 2001, in the United States?", answer: "Terrorists attacked the United States.", important: true },
+            { id: 87, question: "Name one American Indian tribe in the United States.", answer: "• Cherokee<br>• Navajo<br>• Sioux<br>• Chippewa<br>• Choctaw<br>• Pueblo<br>• Apache<br>• Iroquois<br>• Creek<br>• Blackfeet<br>• Seminole<br>• Cheyenne<br>• Arawak<br>• Shawnee<br>• Mohegan<br>• Huron<br>• Oneida<br>• Lakota<br>• Crow<br>• Teton<br>• Hopi<br>• Inuit", important: false },
+            { id: 88, question: "Name one of the two longest rivers in the United States.", answer: "• Missouri (River)<br>• Mississippi (River)", important: false },
+            { id: 89, question: "What ocean is on the West Coast of the United States?", answer: "Pacific (Ocean)", important: false },
+            { id: 90, question: "What ocean is on the East Coast of the United States?", answer: "Atlantic (Ocean)", important: false },
+            { id: 91, question: "Name one U.S. territory.", answer: "• Puerto Rico<br>• U.S. Virgin Islands<br>• American Samoa<br>• Northern Mariana Islands<br>• Guam", important: false },
+            { id: 92, question: "Name one state that borders Canada.", answer: "• Maine<br>• New Hampshire<br>• Vermont<br>• New York<br>• Pennsylvania<br>• Ohio<br>• Michigan<br>• Minnesota<br>• North Dakota<br>• Montana<br>• Idaho<br>• Washington<br>• Alaska", important: false },
+            { id: 93, question: "Name one state that borders Mexico.", answer: "• California<br>• Arizona<br>• New Mexico<br>• Texas", important: false },
+            { id: 94, question: "What is the capital of the United States?", answer: "Washington, D.C.", important: true },
+            { id: 95, question: "Where is the Statue of Liberty?", answer: "• New York (Harbor)<br>• Liberty Island<br>[Also acceptable: New Jersey, near New York City, and on the Hudson (River)]", important: false },
+            { id: 96, question: "Why does the flag have 13 stripes?", answer: "• because there were 13 original colonies<br>• because the stripes represent the original colonies", important: false },
+            { id: 97, question: "Why does the flag have 50 stars?", answer: "• because there is one star for each state<br>• because each star represents a state<br>• because there are 50 states", important: true },
+            { id: 98, question: "What is the name of the national anthem?", answer: "The Star-Spangled Banner", important: false },
+            { id: 99, question: "When do we celebrate Independence Day?", answer: "July 4", important: true },
+            { id: 100, question: "Name two national U.S. holidays.", answer: "• New Year's Day<br>• Martin Luther King, Jr. Day<br>• Presidents' Day<br>• Memorial Day<br>• Independence Day<br>• Labor Day<br>• Columbus Day<br>• Veterans Day<br>• Thanksgiving<br>• Christmas", important: false }
+        ];
+
+        var currentIndex = 0;
+        var isRandom = true;
+        var showImportantOnly = false;
+        var showWrongOnly = false;
+        var displayQuestions = shuffleArray(questionsData);
+        var answerVisible = false;
+        var ttsRate = 1.0;
+        var isAutoPlayMode = false;
+        var autoPlayTimer = null;
+
+        var wrongQuestionIds = (function() {
+            try {
+                var saved = localStorage.getItem('citizenship_wrong_ids');
+                return saved ? JSON.parse(saved) : [];
+            } catch (e) {
+                return [];
+            }
+        })();
+
+        var isDarkMode = (function() {
+            try {
+                return localStorage.getItem('dark_mode') === 'true';
+            } catch (e) {
+                return false;
+            }
+        })();
+
+        function saveWrongIds() {
+            try {
+                localStorage.setItem('citizenship_wrong_ids', JSON.stringify(wrongQuestionIds));
+            } catch (e) {}
+        }
+
+        function saveDarkMode() {
+            try {
+                localStorage.setItem('dark_mode', isDarkMode ? 'true' : 'false');
+            } catch (e) {}
+        }
+
+        var ttsSequenceTimer = null;
+        var isSpeakingAnswer = false;
+
+        function showToast(message) {
+            var toastEl = document.getElementById('toastMsg');
+            if (!toastEl) return;
+            toastEl.textContent = message;
+            toastEl.classList.add('show');
+            setTimeout(function() {
+                toastEl.classList.remove('show');
+            }, 2000);
+        }
+
+        function stopAllSpeech() {
+            if (ttsSequenceTimer) {
+                clearTimeout(ttsSequenceTimer);
+                ttsSequenceTimer = null;
+            }
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+            }
+            isSpeakingAnswer = false;
+
+            var ttsAnsBtnEl = document.getElementById('ttsAnsBtn');
+            var ttsBtnEl = document.getElementById('ttsBtn');
+            if (ttsAnsBtnEl) {
+                ttsAnsBtnEl.innerHTML = '🔊 정답 듣기';
+                ttsAnsBtnEl.classList.remove('playing');
+            }
+            if (ttsBtnEl) {
+                ttsBtnEl.innerHTML = '🔊 영문 듣기';
+                ttsBtnEl.classList.remove('playing');
+            }
+        }
+
+        function playSingleUtterance(cleanText, onEndCallback) {
+            try {
+                var utterance = new SpeechSynthesisUtterance(cleanText);
+                utterance.lang = 'en-US';
+                utterance.rate = ttsRate;
+                utterance.pitch = 1.0;
+                utterance.volume = 1.0;
+
+                try {
+                    var voices = window.speechSynthesis.getVoices();
+                    var preferredVoice = null;
+
+                    // 고품질 여성 음성 우선 순위 (iPhone에서 최적화)
+                    var preferredNames = [
+                        'Samantha',              // iOS 최고 품질 여성 음성
+                        'Samantha (Enhanced)',   // iOS 향상된 버전
+                        'Ava',                   // iOS 자연스러운 여성 음성
+                        'Ava (Enhanced)',
+                        'Google US English',     // Android
+                        'Karen',                 // iOS 호주 영어
+                        'Microsoft Zira',        // Windows
+                        'en-US'                  // 기본
+                    ];
+
+                    if (voices && voices.length > 0) {
+                        // 1순위: 이름으로 선호 음성 찾기
+                        for (var p = 0; p < preferredNames.length; p++) {
+                            for (var i = 0; i < voices.length; i++) {
+                                if (voices[i].name.indexOf(preferredNames[p]) !== -1 &&
+                                    (voices[i].lang === 'en-US' || voices[i].lang === 'en_US')) {
+                                    preferredVoice = voices[i];
+                                    break;
+                                }
+                            }
+                            if (preferredVoice) break;
+                        }
+
+                        // 2순위: en-US 음성 중 아무거나
+                        if (!preferredVoice) {
+                            for (var i = 0; i < voices.length; i++) {
+                                if (voices[i].lang === 'en-US' || voices[i].lang === 'en_US') {
+                                    preferredVoice = voices[i];
+                                    break;
+                                }
+                            }
+                        }
+
+                        if (preferredVoice) {
+                            utterance.voice = preferredVoice;
+                        }
+                    }
+                } catch (vErr) {}
+
+                // iOS에서 안정적인 동작을 위한 추가 처리
+                var estimatedDuration = cleanText.length * 60; // 대략적인 재생 시간 (ms)
+                var hasEnded = false;
+
+                utterance.onend = function() {
+                    if (hasEnded) return;
+                    hasEnded = true;
+                    // iOS에서 안정성을 위해 약간의 추가 대기
+                    setTimeout(function() {
+                        if (typeof onEndCallback === 'function') onEndCallback();
+                    }, 300);
+                };
+
+                utterance.onerror = function() {
+                    if (hasEnded) return;
+                    hasEnded = true;
+                    if (typeof onEndCallback === 'function') onEndCallback();
+                };
+
+                // iOS에서 음성이 실제로 끝났는지 확인하는 안전장치
+                setTimeout(function() {
+                    if (!hasEnded && !window.speechSynthesis.speaking) {
+                        hasEnded = true;
+                        if (typeof onEndCallback === 'function') onEndCallback();
+                    }
+                }, estimatedDuration + 1000);
+
+                window.speechSynthesis.speak(utterance);
+            } catch (e) {
+                if (typeof onEndCallback === 'function') onEndCallback();
+            }
+        }
+
+        function speakQuestion(rawText, callback) {
+            if (!('speechSynthesis' in window)) {
+                showToast('음성 합성을 지원하지 않습니다.');
+                if (callback) callback();
+                return;
+            }
+
+            stopAllSpeech();
+
+            var cleanText = rawText.replace(/<[^>]*>?/gm, ' ')
+                                   .replace(/[•\[\]\(\)]/g, ' ')
+                                   .replace(/\s+/g, ' ')
+                                   .trim();
+
+            if (!cleanText) {
+                if (callback) callback();
+                return;
+            }
+
+            var ttsBtnEl = document.getElementById('ttsBtn');
+            if (ttsBtnEl) {
+                ttsBtnEl.innerHTML = '⏹ 듣는 중...';
+                ttsBtnEl.classList.add('playing');
+            }
+
+            playSingleUtterance(cleanText, function() {
+                if (ttsBtnEl) {
+                    ttsBtnEl.innerHTML = '🔊 영문 듣기';
+                    ttsBtnEl.classList.remove('playing');
+                }
+                // iOS 안정성을 위해 추가 대기
+                setTimeout(function() {
+                    if (callback) callback();
+                }, 200);
+            });
+        }
+
+        function speakAnswerLines(rawHtml, callback) {
+            if (!('speechSynthesis' in window)) {
+                showToast('음성 합성을 지원하지 않습니다.');
+                if (callback) callback();
+                return;
+            }
+
+            if (isSpeakingAnswer) {
+                stopAllSpeech();
+                showToast('정답 읽기를 중단했습니다.');
+                if (callback) callback();
+                return;
+            }
+
+            stopAllSpeech();
+
+            var rawLines = rawHtml.split(/<br\s*\/?>|\n/i);
+            var cleanLines = [];
+
+            for (var i = 0; i < rawLines.length; i++) {
+                var line = rawLines[i].replace(/<[^>]*>?/gm, ' ')
+                                      .replace(/[•\[\]\(\)]/g, ' ')
+                                      .replace(/\s+/g, ' ')
+                                      .trim();
+                if (line.length > 0) {
+                    cleanLines.push(line);
+                }
+            }
+
+            if (cleanLines.length === 0) {
+                if (callback) callback();
+                return;
+            }
+
+            isSpeakingAnswer = true;
+            var ttsAnsBtnEl = document.getElementById('ttsAnsBtn');
+            if (ttsAnsBtnEl) {
+                ttsAnsBtnEl.innerHTML = '⏹ 정지 (' + cleanLines.length + '줄)';
+                ttsAnsBtnEl.classList.add('playing');
+            }
+
+            var currentLineIndex = 0;
+
+            function playNextLine() {
+                if (!isSpeakingAnswer) {
+                    if (callback) callback();
+                    return;
+                }
+
+                if (currentLineIndex >= cleanLines.length) {
+                    stopAllSpeech();
+                    if (callback) callback();
+                    return;
+                }
+
+                var textToRead = cleanLines[currentLineIndex];
+                if (ttsAnsBtnEl) {
+                    ttsAnsBtnEl.innerHTML = '⏹ ' + (currentLineIndex + 1) + '/' + cleanLines.length + '줄';
+                }
+
+                playSingleUtterance(textToRead, function() {
+                    currentLineIndex++;
+                    if (currentLineIndex < cleanLines.length) {
+                        if (ttsAnsBtnEl && isSpeakingAnswer) {
+                            ttsAnsBtnEl.innerHTML = '⏳ 1.5초 대기...';
+                        }
+                        // iOS 안정성을 위해 대기 시간 증가
+                        ttsSequenceTimer = setTimeout(function() {
+                            playNextLine();
+                        }, 1500);
+                    } else {
+                        stopAllSpeech();
+                        // iOS 안정성을 위해 추가 대기
+                        setTimeout(function() {
+                            if (callback) callback();
+                        }, 300);
+                    }
+                });
+            }
+
+            playNextLine();
+        }
+
+        // 자동 재생 로직
+        function startAutoPlay() {
+            if (!isAutoPlayMode) return;
+            if (!displayQuestions || displayQuestions.length === 0) return;
+
+            var current = displayQuestions[currentIndex];
+            if (!current) return;
+
+            // 1. 질문 읽기
+            speakQuestion(current.question, function() {
+                if (!isAutoPlayMode) return;
+
+                // 2. 2초 대기 (질문 이해 시간)
+                autoPlayTimer = setTimeout(function() {
+                    if (!isAutoPlayMode) return;
+
+                    // 3. 정답 보이기
+                    if (!answerVisible) {
+                        toggleAnswerDisplay();
+                    }
+
+                    // 4. 정답 읽기 (약간의 지연 후)
+                    setTimeout(function() {
+                        if (!isAutoPlayMode) return;
+
+                        speakAnswerLines(current.answer, function() {
+                            if (!isAutoPlayMode) return;
+
+                            // 5. 2초 대기 후 다음 문제
+                            autoPlayTimer = setTimeout(function() {
+                                if (!isAutoPlayMode) return;
+
+                                if (currentIndex < displayQuestions.length - 1) {
+                                    goNext(true); // 자동재생 모드에서 호출
+                                    setTimeout(startAutoPlay, 800);
+                                } else {
+                                    stopAutoPlay();
+                                    showToast('자동 재생 완료!');
+                                }
+                            }, 2000);
+                        });
+                    }, 500);
+                }, 2000);
+            });
+        }
+
+        function stopAutoPlay() {
+            isAutoPlayMode = false;
+            if (autoPlayTimer) {
+                clearTimeout(autoPlayTimer);
+                autoPlayTimer = null;
+            }
+            stopAllSpeech();
+
+            var autoplayBtn = document.getElementById('autoplayBtn');
+            if (autoplayBtn) {
+                autoplayBtn.classList.remove('active-autoplay');
+            }
+        }
+
+        function toggleAutoPlay() {
+            isAutoPlayMode = !isAutoPlayMode;
+
+            var autoplayBtn = document.getElementById('autoplayBtn');
+            if (isAutoPlayMode) {
+                if (autoplayBtn) autoplayBtn.classList.add('active-autoplay');
+                showToast('자동 재생 시작');
+                startAutoPlay();
+            } else {
+                if (autoplayBtn) autoplayBtn.classList.remove('active-autoplay');
+                stopAutoPlay();
+                showToast('자동 재생 정지');
+            }
+        }
+
+        // 다크 모드 토글
+        function toggleDarkMode() {
+            isDarkMode = !isDarkMode;
+            var body = document.body;
+            var darkToggle = document.getElementById('darkToggle');
+
+            if (isDarkMode) {
+                body.classList.add('dark-mode');
+                if (darkToggle) darkToggle.textContent = '☀️';
+            } else {
+                body.classList.remove('dark-mode');
+                if (darkToggle) darkToggle.textContent = '🌙';
+            }
+
+            saveDarkMode();
+        }
+
+        // 검색 기능
+        function performSearch(keyword) {
+            if (!keyword || keyword.trim().length === 0) {
+                document.getElementById('searchResults').classList.remove('show');
+                return;
+            }
+
+            keyword = keyword.toLowerCase();
+            var results = [];
+
+            for (var i = 0; i < questionsData.length; i++) {
+                var q = questionsData[i];
+                if (q.question.toLowerCase().indexOf(keyword) !== -1 ||
+                    q.answer.toLowerCase().indexOf(keyword) !== -1) {
+                    results.push(q);
+                    if (results.length >= 10) break;
+                }
+            }
+
+            var resultsEl = document.getElementById('searchResults');
+            if (results.length === 0) {
+                resultsEl.innerHTML = '<div class="search-result-item"><div class="search-result-q">검색 결과 없음</div></div>';
+                resultsEl.classList.add('show');
+            } else {
+                var html = '';
+                for (var i = 0; i < results.length; i++) {
+                    var r = results[i];
+                    var answerPreview = r.answer.replace(/<br>/g, ', ').substring(0, 60);
+                    html += '<div class="search-result-item" data-qid="' + r.id + '">';
+                    html += '<div class="search-result-q">Q.' + r.id + ': ' + r.question.substring(0, 60) + '...</div>';
+                    html += '<div class="search-result-a">' + answerPreview + '...</div>';
+                    html += '</div>';
+                }
+                resultsEl.innerHTML = html;
+                resultsEl.classList.add('show');
+
+                // 검색 결과 클릭 이벤트
+                var items = resultsEl.querySelectorAll('.search-result-item');
+                for (var i = 0; i < items.length; i++) {
+                    items[i].addEventListener('click', function() {
+                        var qid = parseInt(this.getAttribute('data-qid'));
+                        jumpToQuestion(qid);
+                        document.getElementById('searchInput').value = '';
+                        document.getElementById('searchResults').classList.remove('show');
+                    });
+                }
+            }
+        }
+
+        function jumpToQuestion(qid) {
+            for (var i = 0; i < displayQuestions.length; i++) {
+                if (displayQuestions[i].id === qid) {
+                    currentIndex = i;
+                    renderCurrentQuestion();
+                    showToast('Q.' + qid + '번으로 이동');
+                    return;
+                }
+            }
+            showToast('현재 필터에서 해당 문제를 찾을 수 없습니다.');
+        }
+
+        function updateStatsFooter() {
+            var totalCount = displayQuestions.length;
+            var wrongCount = wrongQuestionIds.length;
+
+            document.getElementById('statTotal').textContent = totalCount;
+            document.getElementById('statWrong').textContent = wrongCount;
+
+            if (totalCount === 0) {
+                document.getElementById('statCurrent').textContent = "0";
+            } else {
+                document.getElementById('statCurrent').textContent = (currentIndex + 1);
+            }
+
+            var current = displayQuestions[currentIndex];
+            var isCurrentWrong = current && wrongQuestionIds.indexOf(current.id) !== -1;
+
+            var wrongBadgeEl = document.getElementById('wrongBadge');
+            if (wrongBadgeEl) {
+                if (isCurrentWrong) {
+                    wrongBadgeEl.classList.add('show');
+                } else {
+                    wrongBadgeEl.classList.remove('show');
+                }
+            }
+
+            var wrongToggleBtnEl = document.getElementById('wrongToggleBtn');
+            if (wrongToggleBtnEl) {
+                if (isCurrentWrong) {
+                    wrongToggleBtnEl.classList.add('is-wrong');
+                } else {
+                    wrongToggleBtnEl.classList.remove('is-wrong');
+                }
+            }
+        }
+
+        function renderCurrentQuestion() {
+            try {
+                stopAllSpeech();
+                // 자동재생 중이 아닐 때만 정지 (자동재생 중에는 계속 진행)
+                // stopAutoPlay는 사용자가 수동으로 버튼을 클릭할 때만 호출
+
+                if (!displayQuestions || displayQuestions.length === 0) {
+                    document.getElementById('questionNumber').textContent = 'Q.-';
+                    document.getElementById('importantBadge').style.display = 'none';
+                    document.getElementById('questionText').innerHTML = '<div class="empty-state"><h3>문항이 없습니다</h3></div>';
+                    document.getElementById('answerCard').classList.remove('visible');
+                    document.getElementById('noteContainer').innerHTML = '';
+                    document.getElementById('progressBar').style.width = '0%';
+                    document.getElementById('prevBtn').disabled = true;
+                    document.getElementById('nextBtn').disabled = true;
+                    document.getElementById('answerBtn').disabled = true;
+                    updateStatsFooter();
+                    return;
+                }
+
+                document.getElementById('answerBtn').disabled = false;
+
+                var current = displayQuestions[currentIndex];
+                if (!current) return;
+
+                document.getElementById('questionNumber').textContent = 'Q.' + current.id;
+                document.getElementById('importantBadge').style.display = current.important ? 'inline-block' : 'none';
+                document.getElementById('questionText').textContent = current.question;
+                document.getElementById('answerText').innerHTML = current.answer;
+
+                answerVisible = false;
+                document.getElementById('answerCard').classList.remove('visible');
+                document.getElementById('answerBtn').textContent = '정답 확인';
+                document.getElementById('answerBtn').classList.remove('shown');
+
+                if (current.note) {
+                    document.getElementById('noteContainer').innerHTML = '<div class="note-card">📍 ' + current.note + '</div>';
+                } else {
+                    document.getElementById('noteContainer').innerHTML = '';
+                }
+
+                var progressRatio = Math.round(((currentIndex + 1) / displayQuestions.length) * 100);
+                document.getElementById('progressBar').style.width = progressRatio + '%';
+
+                document.getElementById('prevBtn').disabled = (currentIndex === 0);
+                document.getElementById('nextBtn').disabled = (currentIndex === displayQuestions.length - 1);
+
+                updateStatsFooter();
+            } catch (e) {
+                console.error("렌더링 오류:", e);
+            }
+        }
+
+        function toggleWrongForCurrentQuestion() {
+            if (!displayQuestions || displayQuestions.length === 0) return;
+            var current = displayQuestions[currentIndex];
+            if (!current) return;
+
+            var idx = wrongQuestionIds.indexOf(current.id);
+            if (idx === -1) {
+                wrongQuestionIds.push(current.id);
+                showToast('Q.' + current.id + '번 오답 추가');
+            } else {
+                wrongQuestionIds.splice(idx, 1);
+                showToast('Q.' + current.id + '번 오답 해제');
+
+                if (showWrongOnly) {
+                    applyFilter(true);
+                    return;
+                }
+            }
+
+            saveWrongIds();
+            updateStatsFooter();
+        }
+
+        function toggleAnswerDisplay() {
+            if (!displayQuestions || displayQuestions.length === 0) return;
+            answerVisible = !answerVisible;
+
+            var answerCardEl = document.getElementById('answerCard');
+            var answerBtnEl = document.getElementById('answerBtn');
+
+            if (answerVisible) {
+                answerCardEl.classList.add('visible');
+                answerBtnEl.textContent = '정답 가리기';
+                answerBtnEl.classList.add('shown');
+            } else {
+                stopAllSpeech();
+                answerCardEl.classList.remove('visible');
+                answerBtnEl.textContent = '정답 확인';
+                answerBtnEl.classList.remove('shown');
+            }
+        }
+
+        function goNext(fromAutoPlay) {
+            if (currentIndex < displayQuestions.length - 1) {
+                currentIndex++;
+                renderCurrentQuestion();
+            } else {
+                showToast('마지막 문제입니다.');
+            }
+        }
+
+        function goPrev() {
+            // 이전 버튼은 항상 자동재생 중단
+            if (isAutoPlayMode) {
+                stopAutoPlay();
+            }
+
+            if (currentIndex > 0) {
+                currentIndex--;
+                renderCurrentQuestion();
+            } else {
+                showToast('첫 번째 문제입니다.');
+            }
+        }
+
+        function shuffleArray(arr) {
+            var newArr = arr.slice();
+            for (var i = newArr.length - 1; i > 0; i--) {
+                var j = Math.floor(Math.random() * (i + 1));
+                var temp = newArr[i];
+                newArr[i] = newArr[j];
+                newArr[j] = temp;
+            }
+            return newArr;
+        }
+
+        function applyFilter(keepPosition) {
+            stopAllSpeech();
+            stopAutoPlay();
+
+            var pool = questionsData;
+
+            if (showWrongOnly) {
+                pool = pool.filter(function(q) {
+                    return wrongQuestionIds.indexOf(q.id) !== -1;
+                });
+            } else if (showImportantOnly) {
+                pool = pool.filter(function(q) { return q.important; });
+            }
+
+            if (isRandom) {
+                displayQuestions = shuffleArray(pool);
+            } else {
+                displayQuestions = pool.slice();
+            }
+
+            if (!keepPosition || currentIndex >= displayQuestions.length) {
+                currentIndex = 0;
+            }
+            renderCurrentQuestion();
+        }
+
+        function handleToggleRandom() {
+            isRandom = !isRandom;
+            document.getElementById('randomBtn').classList.toggle('active', isRandom);
+            applyFilter();
+            showToast(isRandom ? '랜덤 순서' : '번호 순서');
+        }
+
+        function handleToggleImportant() {
+            showImportantOnly = !showImportantOnly;
+            if (showImportantOnly) {
+                showWrongOnly = false;
+                document.getElementById('wrongOnlyBtn').classList.remove('active-wrong');
+            }
+            document.getElementById('importantBtn').classList.toggle('active', showImportantOnly);
+            applyFilter();
+            showToast(showImportantOnly ? '핵심 문항만 표시' : '전체 문항 표시');
+        }
+
+        function handleToggleWrongOnly() {
+            showWrongOnly = !showWrongOnly;
+            if (showWrongOnly) {
+                showImportantOnly = false;
+                document.getElementById('importantBtn').classList.remove('active');
+            }
+            document.getElementById('wrongOnlyBtn').classList.toggle('active-wrong', showWrongOnly);
+            applyFilter();
+            showToast(showWrongOnly ? '오답 (' + wrongQuestionIds.length + '개)' : '전체 문항');
+        }
+
+        // 이벤트 바인딩
+        document.getElementById('prevBtn').addEventListener('click', goPrev);
+        document.getElementById('nextBtn').addEventListener('click', function() {
+            // 수동 클릭 시 자동재생 중단
+            if (isAutoPlayMode) {
+                stopAutoPlay();
+            }
+            goNext();
+        });
+        document.getElementById('answerBtn').addEventListener('click', function() {
+            // 수동 클릭 시 자동재생 중단
+            if (isAutoPlayMode) {
+                stopAutoPlay();
+            }
+            toggleAnswerDisplay();
+        });
+        document.getElementById('randomBtn').addEventListener('click', handleToggleRandom);
+        document.getElementById('importantBtn').addEventListener('click', handleToggleImportant);
+        document.getElementById('wrongOnlyBtn').addEventListener('click', handleToggleWrongOnly);
+        document.getElementById('wrongToggleBtn').addEventListener('click', toggleWrongForCurrentQuestion);
+        document.getElementById('autoplayBtn').addEventListener('click', toggleAutoPlay);
+        document.getElementById('darkToggle').addEventListener('click', toggleDarkMode);
+
+        document.getElementById('ttsBtn').addEventListener('click', function() {
+            var cur = displayQuestions[currentIndex];
+            if (cur) speakQuestion(cur.question);
+        });
+
+        document.getElementById('ttsAnsBtn').addEventListener('click', function() {
+            var cur = displayQuestions[currentIndex];
+            if (cur) speakAnswerLines(cur.answer);
+        });
+
+        // 검색
+        document.getElementById('searchInput').addEventListener('input', function() {
+            performSearch(this.value);
+        });
+
+        document.getElementById('searchBtn').addEventListener('click', function() {
+            var keyword = document.getElementById('searchInput').value;
+            performSearch(keyword);
+        });
+
+        // 속도 조절 버튼들
+        var speedBtns = document.querySelectorAll('.speed-btn');
+        for (var i = 0; i < speedBtns.length; i++) {
+            speedBtns[i].addEventListener('click', function() {
+                var speed = parseFloat(this.getAttribute('data-speed'));
+                ttsRate = speed;
+
+                var allSpeedBtns = document.querySelectorAll('.speed-btn');
+                for (var j = 0; j < allSpeedBtns.length; j++) {
+                    allSpeedBtns[j].classList.remove('active');
+                }
+                this.classList.add('active');
+
+                showToast('속도: ' + speed + 'x');
+            });
+        }
+
+        // 키보드 단축키
+        document.addEventListener('keydown', function(e) {
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+            if (e.key === 'ArrowRight' || e.key === ' ') {
+                e.preventDefault();
+                goNext();
+            } else if (e.key === 'ArrowLeft') {
+                e.preventDefault();
+                goPrev();
+            } else if (e.key === 'ArrowDown' || e.key === 'Enter') {
+                e.preventDefault();
+                toggleAnswerDisplay();
+            } else if (e.key === 'x' || e.key === 'X') {
+                e.preventDefault();
+                toggleWrongForCurrentQuestion();
+            }
+        });
+
+        // 스와이프
+        var touchStartX = 0;
+        var touchStartY = 0;
+        var cardContainer = document.getElementById('cardContainer');
+
+        cardContainer.addEventListener('touchstart', function(e) {
+            if (e.touches && e.touches.length === 1) {
+                touchStartX = e.touches[0].clientX;
+                touchStartY = e.touches[0].clientY;
+            }
+        }, { passive: true });
+
+        cardContainer.addEventListener('touchend', function(e) {
+            if (e.changedTouches && e.changedTouches.length === 1) {
+                var touchEndX = e.changedTouches[0].clientX;
+                var touchEndY = e.changedTouches[0].clientY;
+                var diffX = touchEndX - touchStartX;
+                var diffY = touchEndY - touchStartY;
+
+                if (Math.abs(diffX) > 45 && Math.abs(diffX) > Math.abs(diffY) * 1.5) {
+                    if (diffX < 0) {
+                        goNext();
+                    } else {
+                        goPrev();
+                    }
+                }
+            }
+        }, { passive: true });
+
+        // 음성 초기화
+        try {
+            if ('speechSynthesis' in window && window.speechSynthesis) {
+                window.speechSynthesis.onvoiceschanged = function() {
+                    try { window.speechSynthesis.getVoices(); } catch (e) {}
+                };
+            }
+        } catch (speechErr) {}
+
+        // 초기화
+        if (isDarkMode) {
+            document.body.classList.add('dark-mode');
+            document.getElementById('darkToggle').textContent = '☀️';
+        }
+
+        document.getElementById('randomBtn').classList.add('active');
+        renderCurrentQuestion();
+    </script>
+</body>
+</html>
