@@ -7,7 +7,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="시민권 면접">
     <meta name="format-detection" content="telephone=no">
-    <title>미국 시민권 면접 준비 v2lite</title>
+    <title>미국 시민권 면접 준비 v2</title>
     <style>
         :root {
             --primary: #4f46e5;
@@ -49,7 +49,7 @@
             padding: calc(var(--safe-top) + 16px) calc(var(--safe-right) + 16px) calc(var(--safe-bottom) + 20px) calc(var(--safe-left) + 16px);
             display: flex;
             justify-content: center;
-            align-items: center;
+            align-items: flex-start;
             -webkit-font-smoothing: antialiased;
             overflow-x: hidden;
             touch-action: pan-y;
@@ -423,14 +423,16 @@
             box-shadow: none;
         }
 
-        .footer-stats {
+        .stats-display {
             background: var(--card-bg);
-            border-top: 1px solid var(--border-color);
+            border: 1.5px solid var(--border-color);
+            border-radius: 14px;
             padding: 14px 16px;
             display: flex;
             justify-content: space-around;
             align-items: center;
             text-align: center;
+            margin-top: 4px;
         }
 
         .stat-item {
@@ -568,22 +570,7 @@
             <!-- 검색 결과 -->
             <div class="search-results" id="searchResults"></div>
 
-            <div class="filter-row">
-                <button class="filter-btn" id="randomBtn">🔀 랜덤</button>
-                <button class="filter-btn" id="importantBtn">⭐ 핵심</button>
-                <button class="filter-btn" id="wrongOnlyBtn">❌ 오답</button>
-                <button class="filter-btn" id="autoplayBtn">▶️ 자동</button>
-            </div>
-
-            <!-- 속도 조절 -->
-            <div class="speed-controls">
-                <span style="font-size: 11px; color: var(--text-sub); font-weight: 600;">속도:</span>
-                <button class="speed-btn" data-speed="0.7">0.7x</button>
-                <button class="speed-btn" data-speed="0.85">0.85x</button>
-                <button class="speed-btn active" data-speed="1.0">1.0x</button>
-                <button class="speed-btn" data-speed="1.3">1.3x</button>
-            </div>
-
+            <!-- 질문과 답변 표시 영역 -->
             <div class="meta-row">
                 <div class="badges-wrap">
                     <span class="question-number" id="questionNumber">Q.1</span>
@@ -597,6 +584,32 @@
                 <div class="question-text" id="questionText">What is the supreme law of the land?</div>
             </div>
 
+            <p class="swipe-hint">💡 좌우 스와이프 또는 버튼으로 이동</p>
+
+            <!-- 통계 표시 영역 -->
+            <div class="stats-display">
+                <div class="stat-item">
+                    <div class="stat-val" id="statTotal">100</div>
+                    <div class="stat-lbl">총 문항수</div>
+                </div>
+                <div class="stat-item stat-item-interactive" id="wrongToggleBtn">
+                    <div class="stat-val" id="statWrong">0</div>
+                    <div class="stat-lbl">오답</div>
+                    <div class="stat-subhint">탭하여 토글</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-val" id="statCurrent">1</div>
+                    <div class="stat-lbl">현재 문항</div>
+                </div>
+            </div>
+
+            <!-- 정답 확인 버튼 -->
+            <div class="main-controls">
+                <button class="btn btn-nav" id="prevBtn" disabled>◀ 이전</button>
+                <button class="btn btn-reveal" id="answerBtn">정답 확인</button>
+                <button class="btn btn-nav" id="nextBtn">다음 ▶</button>
+            </div>
+
             <div class="answer-card" id="answerCard">
                 <div class="answer-label">
                     <span>✓ Answer (정답)</span>
@@ -607,30 +620,23 @@
 
             <div id="noteContainer"></div>
 
-            <p class="swipe-hint">💡 좌우 스와이프 또는 버튼으로 이동</p>
+            <!-- 컨트롤 버튼 영역 -->
+            <div class="filter-row">
+                <button class="filter-btn" id="randomBtn">🔀 랜덤</button>
+                <button class="filter-btn" id="importantBtn">⭐ 핵심</button>
+                <button class="filter-btn" id="wrongOnlyBtn">❌ 오답</button>
+                <button class="filter-btn" id="autoplayBtn">▶️ 자동</button>
+            </div>
 
-            <div class="main-controls">
-                <button class="btn btn-nav" id="prevBtn" disabled>◀ 이전</button>
-                <button class="btn btn-reveal" id="answerBtn">정답 확인</button>
-                <button class="btn btn-nav" id="nextBtn">다음 ▶</button>
+            <!-- 속도 조절 -->
+            <div class="speed-controls">
+                <span style="font-size: 11px; color: var(--text-sub); font-weight: 600;">속도:</span>
+                <button class="speed-btn" data-speed="0.7">0.7x</button>
+                <button class="speed-btn active" data-speed="0.85">0.85x</button>
+                <button class="speed-btn" data-speed="1.0">1.0x</button>
+                <button class="speed-btn" data-speed="1.3">1.3x</button>
             </div>
         </div>
-
-        <footer class="footer-stats">
-            <div class="stat-item">
-                <div class="stat-val" id="statTotal">100</div>
-                <div class="stat-lbl">총 문항수</div>
-            </div>
-            <div class="stat-item stat-item-interactive" id="wrongToggleBtn">
-                <div class="stat-val" id="statWrong">0</div>
-                <div class="stat-lbl">오답</div>
-                <div class="stat-subhint">탭하여 토글</div>
-            </div>
-            <div class="stat-item">
-                <div class="stat-val" id="statCurrent">1</div>
-                <div class="stat-lbl">현재 문항</div>
-            </div>
-        </footer>
     </div>
 
     <div class="toast" id="toastMsg"></div>
@@ -745,7 +751,7 @@
         var showWrongOnly = false;
         var displayQuestions = shuffleArray(questionsData);
         var answerVisible = false;
-        var ttsRate = 1.0;
+        var ttsRate = 0.85;
         var isAutoPlayMode = false;
         var autoPlayTimer = null;
 
