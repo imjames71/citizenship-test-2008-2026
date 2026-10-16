@@ -1261,6 +1261,13 @@
                 document.getElementById('nextBtn').disabled = (currentIndex === displayQuestions.length - 1);
 
                 updateStatsFooter();
+
+                // 자동재생 모드가 아닐 때 자동으로 영문 듣기 실행
+                if (!isAutoPlayMode) {
+                    setTimeout(function() {
+                        speakQuestion(current.question);
+                    }, 300);
+                }
             } catch (e) {
                 console.error("렌더링 오류:", e);
             }
