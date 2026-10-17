@@ -136,7 +136,7 @@
             background: var(--card-bg);
             border: 1.5px solid var(--border-color);
             border-radius: 14px;
-            padding: 11px 14px;
+            padding: 8px 12px;
             transition: border-color 0.2s ease;
         }
 
@@ -150,7 +150,7 @@
             border: none;
             outline: none;
             color: var(--text-main);
-            font-size: 16px;
+            font-size: 13px;
             font-family: inherit;
         }
 
@@ -162,7 +162,7 @@
             background: transparent;
             border: none;
             color: var(--text-sub);
-            font-size: 16px;
+            font-size: 13px;
             cursor: pointer;
             padding: 0 4px;
         }
@@ -305,7 +305,7 @@
         }
 
         .answer-content {
-            font-size: 17px;
+            font-size: 11px;
             color: var(--text-main);
             line-height: 1.6;
             font-weight: 500;
@@ -582,7 +582,7 @@
                 <div class="stat-item stat-item-interactive" id="wrongToggleBtn">
                     <div class="stat-val" id="statWrong">0</div>
                     <div class="stat-lbl">오답</div>
-                    <div class="stat-subhint">탭하여 토글</div>
+                    <div class="stat-subhint">Tap to toggle</div>
                 </div>
                 <div class="stat-item">
                     <div class="stat-val" id="statCurrent">1</div>
@@ -599,7 +599,7 @@
 
             <div class="answer-card visible" id="answerCard">
                 <div class="answer-label">
-                    <span>✓ Answer (정답)</span>
+                    <span>✓ Answer</span>
                 </div>
                 <div class="answer-content" id="answerText">the Constitution</div>
             </div>
@@ -655,7 +655,7 @@
             { id: 33, question: "Who signs bills to become laws?", answer: "the President", important: true },
             { id: 34, question: "Who vetoes bills?", answer: "the President", important: false },
             { id: 35, question: "What does the President's Cabinet do?", answer: "advises the President", important: false },
-            { id: 36, question: "What are two Cabinet-level positions?", answer: "• Secretary of Agriculture<br>• Secretary of Commerce<br>• Secretary of Defense<br>• Secretary of Education<br>• Secretary of Energy<br>• Secretary of Health and Human Services<br>• Secretary of Homeland Security<br>• Secretary of Housing and Urban Development<br>• Secretary of the Interior<br>• Secretary of Labor<br>• Secretary of State<br>• Secretary of Transportation<br>• Secretary of the Treasury<br>• Secretary of Veterans Affairs<br>• Attorney General<br>• Vice President", important: false },
+            { id: 36, question: "What are two Cabinet-level positions?", answer: "• Secretary of Education<br>• Secretary of Energy<br>• Secretary of Homeland Security<br>• Secretary of Labor<br>• Vice President", important: false },
             { id: 37, question: "What does the judicial branch do?", answer: "• reviews laws<br>• explains laws<br>• resolves disputes (disagreements)<br>• decides if a law goes against the Constitution", important: true },
             { id: 38, question: "What is the highest court in the United States?", answer: "the Supreme Court", important: true },
             { id: 39, question: "How many justices are on the Supreme Court?", answer: "nine (9)", important: false },
@@ -679,7 +679,7 @@
             { id: 57, question: "When must all men register for the Selective Service?", answer: "• at age eighteen (18)<br>• between eighteen (18) and twenty-six (26)", important: false },
             { id: 58, question: "What is one reason colonists came to America?", answer: "• freedom<br>• political liberty<br>• religious freedom<br>• economic opportunity<br>• practice their religion", important: false },
             { id: 59, question: "Who lived in America before the Europeans arrived?", answer: "• American Indians<br>• Native Americans", important: false },
-            { id: 60, question: "What group of people was taken to America and sold as slaves?", answer: "• Africans<br>• people from Africa", important: false },
+            { id: 60, question: "What group of people was taken to America and sold as slaves?", answer: "• Africans", important: false },
             { id: 61, question: "Why did the colonists fight the British?", answer: "• because of high taxes (taxation without representation)<br>• because the British army stayed in their houses (boarding, quartering)<br>• because they didn't have self-government", important: true },
             { id: 62, question: "Who wrote the Declaration of Independence?", answer: "(Thomas) Jefferson", important: true },
             { id: 63, question: "When was the Declaration of Independence adopted?", answer: "July 4, 1776", important: true },
@@ -690,7 +690,7 @@
             { id: 68, question: "What is one thing Benjamin Franklin is famous for?", answer: "• U.S. diplomat<br>• first Postmaster General of the United States", important: false },
             { id: 69, question: "Who is the 'Father of Our Country'?", answer: "(George) Washington", important: true },
             { id: 70, question: "Who was the first President?", answer: "(George) Washington", important: true },
-            { id: 71, question: "What territory did the United States buy from France in 1803?", answer: "• the Louisiana Territory<br>• Louisiana", important: false },
+            { id: 71, question: "What territory did the United States buy from France in 1803?", answer: "• the Louisiana Territor", important: false },
             { id: 72, question: "Name one war fought by the United States in the 1800s.", answer: "• War of 1812<br>• Civil War", important: false },
             { id: 73, question: "Name the U.S. war between the North and the South.", answer: "• the Civil War", important: true },
             { id: 74, question: "Name one problem that led to the Civil War.", answer: "• slavery<br>• states' rights", important: false },
@@ -760,8 +760,37 @@
             } catch (e) {}
         }
 
+        // Wake Lock 함수들
+        async function requestWakeLock() {
+            try {
+                if ('wakeLock' in navigator) {
+                    wakeLock = await navigator.wakeLock.request('screen');
+                    wakeLock.addEventListener('release', function() {
+                        console.log('Wake Lock released');
+                    });
+                    console.log('Wake Lock activated');
+                }
+            } catch (err) {
+                console.error('Wake Lock error:', err);
+            }
+        }
+
+        function releaseWakeLock() {
+            if (wakeLock !== null) {
+                wakeLock.release()
+                    .then(function() {
+                        wakeLock = null;
+                        console.log('Wake Lock released manually');
+                    })
+                    .catch(function(err) {
+                        console.error('Wake Lock release error:', err);
+                    });
+            }
+        }
+
         var ttsSequenceTimer = null;
         var isSpeakingAnswer = false;
+        var wakeLock = null;
 
         function showToast(message) {
             var toastEl = document.getElementById('toastMsg');
@@ -1036,6 +1065,7 @@
                 autoPlayTimer = null;
             }
             stopAllSpeech();
+            releaseWakeLock(); // Wake Lock 해제
 
             var autoplayBtn = document.getElementById('autoplayBtn');
             if (autoplayBtn) {
@@ -1049,6 +1079,7 @@
             var autoplayBtn = document.getElementById('autoplayBtn');
             if (isAutoPlayMode) {
                 if (autoplayBtn) autoplayBtn.classList.add('active-autoplay');
+                requestWakeLock(); // Wake Lock 활성화
                 showToast('자동 재생 시작');
                 startAutoPlay();
             } else {
@@ -1449,6 +1480,20 @@
                 };
             }
         } catch (speechErr) {}
+
+        // Wake Lock 관리 - 페이지를 떠날 때 해제
+        document.addEventListener('visibilitychange', function() {
+            if (document.hidden && wakeLock !== null) {
+                // 페이지가 백그라운드로 가면 Wake Lock이 자동 해제됨
+                // 다시 포그라운드로 돌아왔을 때 자동 재생 중이면 재요청
+            } else if (!document.hidden && isAutoPlayMode && wakeLock === null) {
+                requestWakeLock();
+            }
+        });
+
+        window.addEventListener('beforeunload', function() {
+            releaseWakeLock();
+        });
 
         // 초기화
         if (isDarkMode) {
