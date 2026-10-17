@@ -7,7 +7,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="시민권 면접">
     <meta name="format-detection" content="telephone=no">
-    <title>미국 시민권 면접 준비 v2lite</title>
+    <title>미국 시민권 면접 준비 v2</title>
     <style>
         :root {
             --primary: #4f46e5;
@@ -326,11 +326,19 @@
         }
 
         body.dark-mode .stat-item-interactive.is-wrong {
-            background: rgba(220, 38, 38, 0.2);
+            background: rgba(220, 38, 38, 0.3);
         }
 
         body.dark-mode .stat-item-interactive.is-wrong .stat-val {
             color: #fca5a5;
+        }
+
+        body.dark-mode .stat-item-interactive.is-wrong .stat-lbl {
+            color: #f1f5f9;
+        }
+
+        body.dark-mode .stat-item-interactive.is-wrong .stat-subhint {
+            color: #e2e8f0;
         }
 
         body.dark-mode .wrong-badge {
