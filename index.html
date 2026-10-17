@@ -95,7 +95,7 @@
         .dark-toggle {
             position: absolute;
             top: 20px;
-            right: 20px;
+            right: 10px;
             background: rgba(255, 255, 255, 0.1);
             border: 1px solid rgba(255, 255, 255, 0.2);
             color: white;
@@ -173,6 +173,7 @@
             overflow-x: auto;
             padding-bottom: 4px;
             -webkit-overflow-scrolling: touch;
+            justify-content: center;
         }
 
         .filter-btn {
@@ -211,32 +212,6 @@
         @keyframes pulsePlay {
             0%, 100% { opacity: 1; }
             50% { opacity: 0.8; }
-        }
-
-        /* 속도 조절 버튼들 */
-        .speed-controls {
-            display: flex;
-            gap: 6px;
-            align-items: center;
-        }
-
-        .speed-btn {
-            padding: 6px 10px;
-            background: var(--card-bg);
-            color: var(--text-sub);
-            border: 1px solid var(--border-color);
-            border-radius: 10px;
-            font-size: 11px;
-            font-weight: 700;
-            cursor: pointer;
-            user-select: none;
-            transition: all 0.15s ease;
-        }
-
-        .speed-btn.active {
-            background: var(--primary);
-            border-color: var(--primary);
-            color: #ffffff;
         }
 
         .meta-row {
@@ -286,26 +261,6 @@
             display: inline-flex;
         }
 
-        .voice-btn {
-            background: var(--card-bg);
-            border: 1px solid var(--border-color);
-            color: var(--text-sub);
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-size: 13px;
-            font-weight: 600;
-            cursor: pointer;
-            user-select: none;
-            transition: all 0.15s ease;
-        }
-
-        .voice-btn.playing {
-            background: #fee2e2;
-            border-color: #fca5a5;
-            color: #b91c1c;
-            animation: pulsePlay 1.2s infinite ease-in-out;
-        }
-
         .question-box {
             min-height: 84px;
             display: flex;
@@ -317,6 +272,8 @@
             line-height: 1.45;
             color: var(--text-main);
             font-weight: 700;
+            cursor: pointer;
+            user-select: none;
         }
 
         .answer-card {
@@ -418,9 +375,8 @@
             box-shadow: 0 4px 12px rgba(5, 150, 105, 0.25);
         }
 
-        .btn-reveal.shown {
-            background: #475569;
-            box-shadow: none;
+        .btn-reveal.playing {
+            background: #dc2626;
         }
 
         .stats-display {
@@ -577,14 +533,13 @@
                     <span class="important-badge" id="importantBadge">자주 출제</span>
                     <span class="wrong-badge" id="wrongBadge">❌ 오답</span>
                 </div>
-                <button class="voice-btn" id="ttsBtn">🔊 영문 듣기</button>
             </div>
 
             <div class="question-box">
                 <div class="question-text" id="questionText">What is the supreme law of the land?</div>
             </div>
 
-            <p class="swipe-hint">💡 좌우 스와이프 또는 버튼으로 이동</p>
+            <p class="swipe-hint">💡 Swipe left/right or click to replay</p>
 
             <!-- 통계 표시 영역 -->
             <div class="stats-display">
@@ -603,17 +558,16 @@
                 </div>
             </div>
 
-            <!-- 정답 확인 버튼 -->
+            <!-- 정답 듣기 버튼 -->
             <div class="main-controls">
                 <button class="btn btn-nav" id="prevBtn" disabled>◀ 이전</button>
-                <button class="btn btn-reveal" id="answerBtn">정답 확인</button>
+                <button class="btn btn-reveal" id="answerBtn">🔊 정답 듣기</button>
                 <button class="btn btn-nav" id="nextBtn">다음 ▶</button>
             </div>
 
-            <div class="answer-card" id="answerCard">
+            <div class="answer-card visible" id="answerCard">
                 <div class="answer-label">
                     <span>✓ Answer (정답)</span>
-                    <button class="voice-btn" id="ttsAnsBtn" style="padding: 4px 10px; font-size: 12px;">🔊 정답 듣기</button>
                 </div>
                 <div class="answer-content" id="answerText">the Constitution</div>
             </div>
@@ -626,15 +580,6 @@
                 <button class="filter-btn" id="importantBtn">⭐ 핵심</button>
                 <button class="filter-btn" id="wrongOnlyBtn">❌ 오답</button>
                 <button class="filter-btn" id="autoplayBtn">▶️ 자동</button>
-            </div>
-
-            <!-- 속도 조절 -->
-            <div class="speed-controls">
-                <span style="font-size: 11px; color: var(--text-sub); font-weight: 600;">속도:</span>
-                <button class="speed-btn" data-speed="0.7">0.7x</button>
-                <button class="speed-btn active" data-speed="0.85">0.85x</button>
-                <button class="speed-btn" data-speed="1.0">1.0x</button>
-                <button class="speed-btn" data-speed="1.3">1.3x</button>
             </div>
         </div>
     </div>
@@ -750,8 +695,7 @@
         var showImportantOnly = false;
         var showWrongOnly = false;
         var displayQuestions = shuffleArray(questionsData);
-        var answerVisible = false;
-        var ttsRate = 0.85;
+        var ttsRate = 0.85; // 고정된 속도
         var isAutoPlayMode = false;
         var autoPlayTimer = null;
 
@@ -807,15 +751,10 @@
             }
             isSpeakingAnswer = false;
 
-            var ttsAnsBtnEl = document.getElementById('ttsAnsBtn');
-            var ttsBtnEl = document.getElementById('ttsBtn');
-            if (ttsAnsBtnEl) {
-                ttsAnsBtnEl.innerHTML = '🔊 정답 듣기';
-                ttsAnsBtnEl.classList.remove('playing');
-            }
-            if (ttsBtnEl) {
-                ttsBtnEl.innerHTML = '🔊 영문 듣기';
-                ttsBtnEl.classList.remove('playing');
+            var answerBtnEl = document.getElementById('answerBtn');
+            if (answerBtnEl) {
+                answerBtnEl.innerHTML = '🔊 정답 듣기';
+                answerBtnEl.classList.remove('playing');
             }
         }
 
@@ -924,17 +863,7 @@
                 return;
             }
 
-            var ttsBtnEl = document.getElementById('ttsBtn');
-            if (ttsBtnEl) {
-                ttsBtnEl.innerHTML = '⏹ 듣는 중...';
-                ttsBtnEl.classList.add('playing');
-            }
-
             playSingleUtterance(cleanText, function() {
-                if (ttsBtnEl) {
-                    ttsBtnEl.innerHTML = '🔊 영문 듣기';
-                    ttsBtnEl.classList.remove('playing');
-                }
                 // iOS 안정성을 위해 추가 대기
                 setTimeout(function() {
                     if (callback) callback();
@@ -977,10 +906,10 @@
             }
 
             isSpeakingAnswer = true;
-            var ttsAnsBtnEl = document.getElementById('ttsAnsBtn');
-            if (ttsAnsBtnEl) {
-                ttsAnsBtnEl.innerHTML = '⏹ 정지 (' + cleanLines.length + '줄)';
-                ttsAnsBtnEl.classList.add('playing');
+            var answerBtnEl = document.getElementById('answerBtn');
+            if (answerBtnEl) {
+                answerBtnEl.innerHTML = '⏹ 정지 (' + cleanLines.length + '줄)';
+                answerBtnEl.classList.add('playing');
             }
 
             var currentLineIndex = 0;
@@ -998,15 +927,15 @@
                 }
 
                 var textToRead = cleanLines[currentLineIndex];
-                if (ttsAnsBtnEl) {
-                    ttsAnsBtnEl.innerHTML = '⏹ ' + (currentLineIndex + 1) + '/' + cleanLines.length + '줄';
+                if (answerBtnEl) {
+                    answerBtnEl.innerHTML = '⏹ ' + (currentLineIndex + 1) + '/' + cleanLines.length + '줄';
                 }
 
                 playSingleUtterance(textToRead, function() {
                     currentLineIndex++;
                     if (currentLineIndex < cleanLines.length) {
-                        if (ttsAnsBtnEl && isSpeakingAnswer) {
-                            ttsAnsBtnEl.innerHTML = '⏳ 1.5초 대기...';
+                        if (answerBtnEl && isSpeakingAnswer) {
+                            answerBtnEl.innerHTML = '⏳ 1.5초 대기...';
                         }
                         // iOS 안정성을 위해 대기 시간 증가
                         ttsSequenceTimer = setTimeout(function() {
@@ -1041,19 +970,14 @@
                 autoPlayTimer = setTimeout(function() {
                     if (!isAutoPlayMode) return;
 
-                    // 3. 정답 보이기
-                    if (!answerVisible) {
-                        toggleAnswerDisplay();
-                    }
-
-                    // 4. 정답 읽기 (약간의 지연 후)
+                    // 3. 정답 읽기 (약간의 지연 후)
                     setTimeout(function() {
                         if (!isAutoPlayMode) return;
 
                         speakAnswerLines(current.answer, function() {
                             if (!isAutoPlayMode) return;
 
-                            // 5. 2초 대기 후 다음 문제
+                            // 4. 2초 대기 후 다음 문제
                             autoPlayTimer = setTimeout(function() {
                                 if (!isAutoPlayMode) return;
 
@@ -1132,7 +1056,7 @@
                 if (q.question.toLowerCase().indexOf(keyword) !== -1 ||
                     q.answer.toLowerCase().indexOf(keyword) !== -1) {
                     results.push(q);
-                    if (results.length >= 10) break;
+                    if (results.length >= 20) break;
                 }
             }
 
@@ -1243,10 +1167,10 @@
                 document.getElementById('questionText').textContent = current.question;
                 document.getElementById('answerText').innerHTML = current.answer;
 
-                answerVisible = false;
-                document.getElementById('answerCard').classList.remove('visible');
-                document.getElementById('answerBtn').textContent = '정답 확인';
-                document.getElementById('answerBtn').classList.remove('shown');
+                // 항상 정답 표시
+                document.getElementById('answerCard').classList.add('visible');
+                document.getElementById('answerBtn').textContent = '🔊 정답 듣기';
+                document.getElementById('answerBtn').classList.remove('playing');
 
                 if (current.note) {
                     document.getElementById('noteContainer').innerHTML = '<div class="note-card">📍 ' + current.note + '</div>';
@@ -1295,22 +1219,11 @@
             updateStatsFooter();
         }
 
-        function toggleAnswerDisplay() {
+        function playAnswerAudio() {
             if (!displayQuestions || displayQuestions.length === 0) return;
-            answerVisible = !answerVisible;
-
-            var answerCardEl = document.getElementById('answerCard');
-            var answerBtnEl = document.getElementById('answerBtn');
-
-            if (answerVisible) {
-                answerCardEl.classList.add('visible');
-                answerBtnEl.textContent = '정답 가리기';
-                answerBtnEl.classList.add('shown');
-            } else {
-                stopAllSpeech();
-                answerCardEl.classList.remove('visible');
-                answerBtnEl.textContent = '정답 확인';
-                answerBtnEl.classList.remove('shown');
+            var current = displayQuestions[currentIndex];
+            if (current) {
+                speakAnswerLines(current.answer);
             }
         }
 
@@ -1417,7 +1330,7 @@
             if (isAutoPlayMode) {
                 stopAutoPlay();
             }
-            toggleAnswerDisplay();
+            playAnswerAudio();
         });
         document.getElementById('randomBtn').addEventListener('click', handleToggleRandom);
         document.getElementById('importantBtn').addEventListener('click', handleToggleImportant);
@@ -1426,14 +1339,10 @@
         document.getElementById('autoplayBtn').addEventListener('click', toggleAutoPlay);
         document.getElementById('darkToggle').addEventListener('click', toggleDarkMode);
 
-        document.getElementById('ttsBtn').addEventListener('click', function() {
+        // 질문 텍스트 클릭 시 다시 듣기
+        document.getElementById('questionText').addEventListener('click', function() {
             var cur = displayQuestions[currentIndex];
             if (cur) speakQuestion(cur.question);
-        });
-
-        document.getElementById('ttsAnsBtn').addEventListener('click', function() {
-            var cur = displayQuestions[currentIndex];
-            if (cur) speakAnswerLines(cur.answer);
         });
 
         // 검색
@@ -1446,23 +1355,6 @@
             performSearch(keyword);
         });
 
-        // 속도 조절 버튼들
-        var speedBtns = document.querySelectorAll('.speed-btn');
-        for (var i = 0; i < speedBtns.length; i++) {
-            speedBtns[i].addEventListener('click', function() {
-                var speed = parseFloat(this.getAttribute('data-speed'));
-                ttsRate = speed;
-
-                var allSpeedBtns = document.querySelectorAll('.speed-btn');
-                for (var j = 0; j < allSpeedBtns.length; j++) {
-                    allSpeedBtns[j].classList.remove('active');
-                }
-                this.classList.add('active');
-
-                showToast('속도: ' + speed + 'x');
-            });
-        }
-
         // 키보드 단축키
         document.addEventListener('keydown', function(e) {
             if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
@@ -1474,7 +1366,7 @@
                 goPrev();
             } else if (e.key === 'ArrowDown' || e.key === 'Enter') {
                 e.preventDefault();
-                toggleAnswerDisplay();
+                playAnswerAudio();
             } else if (e.key === 'x' || e.key === 'X') {
                 e.preventDefault();
                 toggleWrongForCurrentQuestion();
