@@ -5,9 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <meta name="apple-mobile-web-app-title" content="시민권 면접">
+    <meta name="apple-mobile-web-app-title" content="US 시민권 면접">
     <meta name="format-detection" content="telephone=no">
-    <title>미국 시민권 면접 준비 v2lite</title>
+    <title>US Citizenship Civics Test v2lite</title>
     <style>
         :root {
             --primary: #4f46e5;
@@ -332,7 +332,7 @@
         }
 
         .answer-content {
-            font-size: 11px;
+            font-size: 10px;
             color: var(--text-main);
             line-height: 1.6;
             font-weight: 500;
@@ -613,6 +613,13 @@
                 <button class="btn btn-nav" id="nextBtn">다음 ▶</button>
             </div>
 
+            <div class="answer-card visible" id="answerCard">
+                <div class="answer-label">
+                    <span>✓ Answer</span>
+                </div>
+                <div class="answer-content" id="answerText">the Constitution</div>
+            </div>
+
             <!-- 통계 표시 영역 -->
             <div class="stats-display">
                 <div class="stat-item">
@@ -628,13 +635,6 @@
                     <div class="stat-val" id="statCurrent">1</div>
                     <div class="stat-lbl">현재 문항</div>
                 </div>
-            </div>
-
-            <div class="answer-card visible" id="answerCard">
-                <div class="answer-label">
-                    <span>✓ Answer</span>
-                </div>
-                <div class="answer-content" id="answerText">the Constitution</div>
             </div>
 
             <div id="noteContainer"></div>
