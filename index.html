@@ -1015,11 +1015,13 @@
 
                                 if (currentIndex < displayQuestions.length - 1) {
                                     goNext(true); // 자동재생 모드에서 호출
-                                    setTimeout(startAutoPlay, 800);
                                 } else {
-                                    stopAutoPlay();
-                                    showToast('자동 재생 완료!');
+                                    // 마지막 문항이면 처음으로 돌아가기
+                                    currentIndex = 0;
+                                    renderCurrentQuestion(false);
+                                    showToast('처음부터 다시 시작합니다.');
                                 }
+                                setTimeout(startAutoPlay, 800);
                             }, 2000);
                         });
                     }, 500);
