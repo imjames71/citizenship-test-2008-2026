@@ -178,12 +178,12 @@
 
         .filter-btn {
             flex-shrink: 0;
-            padding: 7px 10px;
+            padding: 6px 9px;
             background: var(--card-bg);
             color: var(--text-sub);
             border: 1px solid var(--border-color);
             border-radius: 10px;
-            font-size: 12px;
+            font-size: 11px;
             font-weight: 600;
             cursor: pointer;
             user-select: none;
@@ -290,10 +290,14 @@
         .question-text {
             font-size: 20px;
             line-height: 1.45;
-            color: var(--text-main);
+            color: #d0d0d0;
             font-weight: 700;
             cursor: pointer;
             user-select: none;
+        }
+
+        body.dark-mode .question-text {
+            color: #3d4756;
         }
 
         .answer-card {
@@ -303,17 +307,10 @@
             padding: 18px 20px;
             display: none;
             animation: fadeIn 0.2s ease-out;
-            cursor: pointer;
-            user-select: none;
-            transition: opacity 0.15s ease;
         }
 
         .answer-card.visible {
             display: block;
-        }
-
-        .answer-card:active {
-            opacity: 0.7;
         }
 
         @keyframes fadeIn {
@@ -340,6 +337,17 @@
 
         body.dark-mode .answer-content {
             color: #3d4756;
+        }
+
+        .answer-line {
+            cursor: pointer;
+            padding: 4px 0;
+            transition: opacity 0.15s ease;
+            user-select: none;
+        }
+
+        .answer-line:active {
+            opacity: 0.5;
         }
 
         .note-card {
@@ -678,7 +686,7 @@
             { id: 18, question: "How many U.S. Senators are there?", answer: "100", important: true },
             { id: 19, question: "We elect a U.S. Senator for how many years?", answer: "6", important: false },
             { id: 20, question: "Who is one of your state's U.S. Senators now?", answer: "• Dick Durbin", important: true, senior: true, note: "Illinois 주 상원의원 (2026년 기준)" },
-            { id: 21, question: "The House of Representatives has how many voting members?", answer: "four hundred thirty-five (435)", important: false },
+            { id: 21, question: "The House of Representatives has how many voting members?", answer: "435", important: false },
             { id: 22, question: "We elect a U.S. Representative for how many years?", answer: "2", important: false },
             { id: 23, question: "Name your U.S. Representative.", answer: "Brad Schneider", important: true, note: "IL 제10선거구 (Northbrook)" },
             { id: 24, question: "Who does a U.S. Senator represent?", answer: "all people of the state", important: false },
@@ -1286,7 +1294,28 @@
                 }
 
                 document.getElementById('questionText').textContent = current.question;
-                document.getElementById('answerText').innerHTML = current.answer;
+
+                // 정답을 줄별로 분리하여 렌더링
+                var answerTextEl = document.getElementById('answerText');
+                var answerLines = current.answer.split(/<br\s*\/?>|\n/i);
+                var answerHtml = '';
+
+                for (var i = 0; i < answerLines.length; i++) {
+                    var line = answerLines[i].trim();
+                    if (line.length > 0) {
+                        answerHtml += '<div class="answer-line" data-line="' + i + '">' + line + '</div>';
+                    }
+                }
+                answerTextEl.innerHTML = answerHtml;
+
+                // 각 줄에 클릭 이벤트 추가
+                var answerLineEls = answerTextEl.querySelectorAll('.answer-line');
+                for (var i = 0; i < answerLineEls.length; i++) {
+                    answerLineEls[i].addEventListener('click', function() {
+                        var lineText = this.textContent;
+                        speakSingleAnswerLine(lineText);
+                    });
+                }
 
                 // 항상 정답 표시
                 document.getElementById('answerCard').classList.add('visible');
@@ -1354,6 +1383,26 @@
             if (current) {
                 speakAnswerLines(current.answer);
             }
+        }
+
+        function speakSingleAnswerLine(lineText) {
+            if (!('speechSynthesis' in window)) {
+                showToast('음성 합성을 지원하지 않습니다.');
+                return;
+            }
+
+            stopAllSpeech();
+
+            var cleanText = lineText.replace(/<[^>]*>?/gm, ' ')
+                                   .replace(/[•\[\]\(\)]/g, ' ')
+                                   .replace(/\s+/g, ' ')
+                                   .trim();
+
+            if (!cleanText) return;
+
+            playSingleUtterance(cleanText, function() {
+                // 재생 완료
+            });
         }
 
         function goNext(fromAutoPlay) {
@@ -1492,12 +1541,6 @@
         document.getElementById('questionText').addEventListener('click', function() {
             var cur = displayQuestions[currentIndex];
             if (cur) speakQuestion(cur.question);
-        });
-
-        // 정답 카드 클릭 시 정답 듣기
-        document.getElementById('answerCard').addEventListener('click', function() {
-            var cur = displayQuestions[currentIndex];
-            if (cur) speakAnswerLines(cur.answer);
         });
 
         // 검색
