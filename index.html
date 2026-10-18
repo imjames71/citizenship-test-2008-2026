@@ -610,18 +610,11 @@
 
             <p class="swipe-hint">💡 Swipe left/right or Tap to replay</p>
 
-            <!-- 질문 듣기 버튼 -->
+            <!-- 정답 듣기 버튼 -->
             <div class="main-controls">
                 <button class="btn btn-nav" id="prevBtn" disabled>◀ 이전</button>
-                <button class="btn btn-reveal" id="answerBtn">🔊 질문 듣기</button>
+                <button class="btn btn-reveal" id="answerBtn">🔊 정답 듣기</button>
                 <button class="btn btn-nav" id="nextBtn">다음 ▶</button>
-            </div>
-
-            <div class="answer-card visible" id="answerCard">
-                <div class="answer-label">
-                    <span>✓ Answer</span>
-                </div>
-                <div class="answer-content" id="answerText">the Constitution</div>
             </div>
 
             <!-- 통계 표시 영역 -->
@@ -650,6 +643,13 @@
                 <button class="filter-btn" id="wrongOnlyBtn">❌ 오답</button>
                 <button class="filter-btn" id="seniorOnlyBtn">👴 65세</button>
                 <button class="filter-btn" id="autoplayBtn">▶️ 자동</button>
+            </div>
+
+            <div class="answer-card visible" id="answerCard">
+                <div class="answer-label">
+                    <span>✓ Answer</span>
+                </div>
+                <div class="answer-content" id="answerText">the Constitution</div>
             </div>
         </div>
     </div>
@@ -853,7 +853,7 @@
 
             var answerBtnEl = document.getElementById('answerBtn');
             if (answerBtnEl) {
-                answerBtnEl.innerHTML = '🔊 질문 듣기';
+                answerBtnEl.innerHTML = '🔊 정답 듣기';
                 answerBtnEl.classList.remove('playing');
             }
         }
@@ -1006,6 +1006,18 @@
             }
 
             isSpeakingAnswer = true;
+            var answerBtnEl = document.getElementById('answerBtn');
+
+            function getOrdinal(n) {
+                var s = ["th", "st", "nd", "rd"];
+                var v = n % 100;
+                return n + (s[(v - 20) % 10] || s[v] || s[0]);
+            }
+
+            if (answerBtnEl) {
+                answerBtnEl.innerHTML = '⏹ Stop (' + cleanLines.length + ' lines)';
+                answerBtnEl.classList.add('playing');
+            }
 
             var currentLineIndex = 0;
 
@@ -1022,6 +1034,10 @@
                 }
 
                 var textToRead = cleanLines[currentLineIndex];
+
+                if (answerBtnEl) {
+                    answerBtnEl.innerHTML = '⏹ ' + getOrdinal(currentLineIndex + 1) + ' of ' + cleanLines.length;
+                }
 
                 playSingleUtterance(textToRead, function() {
                     currentLineIndex++;
@@ -1274,7 +1290,7 @@
 
                 // 항상 정답 표시
                 document.getElementById('answerCard').classList.add('visible');
-                document.getElementById('answerBtn').textContent = '🔊 질문 듣기';
+                document.getElementById('answerBtn').textContent = '🔊 정답 듣기';
                 document.getElementById('answerBtn').classList.remove('playing');
 
                 if (current.note) {
@@ -1462,7 +1478,7 @@
             if (isAutoPlayMode) {
                 stopAutoPlay();
             }
-            playQuestionAudio();
+            playAnswerAudio();
         });
         document.getElementById('randomBtn').addEventListener('click', handleToggleRandom);
         document.getElementById('importantBtn').addEventListener('click', handleToggleImportant);
@@ -1505,7 +1521,7 @@
                 goPrev();
             } else if (e.key === 'ArrowDown' || e.key === 'Enter') {
                 e.preventDefault();
-                playQuestionAudio();
+                playAnswerAudio();
             } else if (e.key === 'x' || e.key === 'X') {
                 e.preventDefault();
                 toggleWrongForCurrentQuestion();
