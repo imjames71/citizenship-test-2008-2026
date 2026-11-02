@@ -653,7 +653,7 @@
                 <button class="filter-btn" id="autoplayBtn">▶️ 자동</button>
             </div>
 
-            <div class="answer-card visible" id="answerCard">
+            <div class="answer-card" id="answerCard">
                 <div class="answer-label">
                     <span>✓ Answer</span>
                 </div>
@@ -1130,6 +1130,8 @@
                     setTimeout(function() {
                         if (!isAutoPlayMode) return;
 
+                        // 자동재생 시에도 정답 카드 표시
+                        document.getElementById('answerCard').classList.add('visible');
                         speakAnswerLines(current.answer, function() {
                             if (!isAutoPlayMode) return;
 
@@ -1360,8 +1362,8 @@
                     });
                 }
 
-                // 항상 정답 표시
-                document.getElementById('answerCard').classList.add('visible');
+                // 정답 카드는 기본적으로 숨김
+                document.getElementById('answerCard').classList.remove('visible');
                 document.getElementById('answerBtn').textContent = '🔊 정답 듣기';
                 document.getElementById('answerBtn').classList.remove('playing');
 
@@ -1424,6 +1426,8 @@
             if (!displayQuestions || displayQuestions.length === 0) return;
             var current = displayQuestions[currentIndex];
             if (current) {
+                // 정답 듣기 버튼을 클릭하면 정답 카드 표시
+                document.getElementById('answerCard').classList.add('visible');
                 speakAnswerLines(current.answer);
             }
         }
