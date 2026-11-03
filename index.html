@@ -5,9 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <meta name="apple-mobile-web-app-title" content="N Civics Test 2008">
+    <meta name="apple-mobile-web-app-title" content="🇺🇸 Civics Test 2008">
     <meta name="format-detection" content="telephone=no">
-    <title>US Citizenship Civics Test v2lite</title>
+    <title>US Citizenship Civics Test</title>
     <style>
         :root {
             --primary: #4f46e5;
@@ -25,7 +25,6 @@
             --safe-right: env(safe-area-inset-right, 0px);
         }
 
-        /* 다크 모드 */
         body.dark-mode {
             --bg-gradient: linear-gradient(145deg, #0f172a 0%, #1e293b 100%);
             --card-bg: #1e293b;
@@ -91,7 +90,6 @@
             margin-top: 6px;
         }
 
-        /* 다크모드 토글 버튼 */
         .dark-toggle {
             position: absolute;
             top: 20px;
@@ -128,7 +126,6 @@
             gap: 16px;
         }
 
-        /* 검색 바 */
         .search-bar {
             display: flex;
             gap: 8px;
@@ -455,6 +452,23 @@
             background: #dc2626;
         }
 
+        .pause-container {
+            margin-top: 10px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .btn-pause {
+            background: #f59e0b;
+            color: #ffffff;
+            box-shadow: 0 4px 12px rgba(245, 158, 11, 0.25);
+            min-width: 200px;
+        }
+
+        .btn-pause.paused {
+            background: #059669;
+        }
+
         .stats-display {
             background: var(--card-bg);
             border: 1.5px solid var(--border-color);
@@ -602,6 +616,15 @@
             <!-- 검색 결과 -->
             <div class="search-results" id="searchResults"></div>
 
+            <!-- 컨트롤 버튼 영역 -->
+            <div class="filter-row">
+                <button class="filter-btn" id="randomBtn">🔀 랜덤</button>
+                <button class="filter-btn" id="importantBtn">⭐ 핵심</button>
+                <button class="filter-btn" id="wrongOnlyBtn">❌ 오답</button>
+                <button class="filter-btn" id="seniorOnlyBtn">👴 65세</button>
+                <button class="filter-btn" id="autoplayBtn">▶️ 자동</button>
+            </div>
+
             <!-- 질문과 답변 표시 영역 -->
             <div class="meta-row">
                 <div class="badges-wrap">
@@ -642,16 +665,12 @@
                 </div>
             </div>
 
-            <div id="noteContainer"></div>
-
-            <!-- 컨트롤 버튼 영역 -->
-            <div class="filter-row">
-                <button class="filter-btn" id="randomBtn">🔀 랜덤</button>
-                <button class="filter-btn" id="importantBtn">⭐ 핵심</button>
-                <button class="filter-btn" id="wrongOnlyBtn">❌ 오답</button>
-                <button class="filter-btn" id="seniorOnlyBtn">👴 65세</button>
-                <button class="filter-btn" id="autoplayBtn">▶️ 자동</button>
+            <!-- Pause 버튼 (자동 재생 중에만 표시) -->
+            <div class="pause-container" id="pauseContainer" style="display: none;">
+                <button class="btn btn-pause" id="pauseBtn">⏸ Pause</button>
             </div>
+
+            <div id="noteContainer"></div>
 
             <div class="answer-card" id="answerCard">
                 <div class="answer-label">
@@ -776,6 +795,7 @@
         var displayQuestions = shuffleArray(questionsData);
         var ttsRate = 0.85; // 고정된 속도
         var isAutoPlayMode = false;
+        var isPaused = false;
         var autoPlayTimer = null;
 
         var wrongQuestionIds = (function() {
@@ -838,6 +858,53 @@
         var ttsSequenceTimer = null;
         var isSpeakingAnswer = false;
         var wakeLock = null;
+        var keepAliveAudio = null;
+
+        // 무음 오디오로 백그라운드에서 계속 실행 유지 (화면 꺼짐 방지)
+        function createKeepAliveAudio() {
+            if (keepAliveAudio) return;
+
+            try {
+                keepAliveAudio = new Audio();
+                // 10초 무음 데이터 URI (AAC)
+                keepAliveAudio.src = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA';
+                keepAliveAudio.loop = true;
+                keepAliveAudio.volume = 0.01; // 거의 무음
+                keepAliveAudio.preload = 'auto';
+            } catch (e) {
+                console.error('Keep-alive audio creation failed:', e);
+            }
+        }
+
+        function startKeepAliveAudio() {
+            createKeepAliveAudio();
+            if (keepAliveAudio) {
+                try {
+                    var playPromise = keepAliveAudio.play();
+                    if (playPromise !== undefined) {
+                        playPromise.then(function() {
+                            console.log('Keep-alive audio started');
+                        }).catch(function(error) {
+                            console.log('Keep-alive audio play prevented:', error);
+                        });
+                    }
+                } catch (e) {
+                    console.error('Keep-alive audio play error:', e);
+                }
+            }
+        }
+
+        function stopKeepAliveAudio() {
+            if (keepAliveAudio) {
+                try {
+                    keepAliveAudio.pause();
+                    keepAliveAudio.currentTime = 0;
+                    console.log('Keep-alive audio stopped');
+                } catch (e) {
+                    console.error('Keep-alive audio stop error:', e);
+                }
+            }
+        }
 
         function showToast(message) {
             var toastEl = document.getElementById('toastMsg');
@@ -1112,7 +1179,7 @@
 
         // 자동 재생 로직
         function startAutoPlay() {
-            if (!isAutoPlayMode) return;
+            if (!isAutoPlayMode || isPaused) return;
             if (!displayQuestions || displayQuestions.length === 0) return;
 
             var current = displayQuestions[currentIndex];
@@ -1120,24 +1187,24 @@
 
             // 1. 질문 읽기
             speakQuestion(current.question, function() {
-                if (!isAutoPlayMode) return;
+                if (!isAutoPlayMode || isPaused) return;
 
-                // 2. 2초 대기 (질문 이해 시간)
+                // 2. 3초 대기 (질문 이해 시간)
                 autoPlayTimer = setTimeout(function() {
-                    if (!isAutoPlayMode) return;
+                    if (!isAutoPlayMode || isPaused) return;
 
                     // 3. 정답 읽기 (약간의 지연 후)
                     setTimeout(function() {
-                        if (!isAutoPlayMode) return;
+                        if (!isAutoPlayMode || isPaused) return;
 
                         // 자동재생 시에도 정답 카드 표시
                         document.getElementById('answerCard').classList.add('visible');
                         speakAnswerLines(current.answer, function() {
-                            if (!isAutoPlayMode) return;
+                            if (!isAutoPlayMode || isPaused) return;
 
                             // 4. 2초 대기 후 다음 문제
                             autoPlayTimer = setTimeout(function() {
-                                if (!isAutoPlayMode) return;
+                                if (!isAutoPlayMode || isPaused) return;
 
                                 if (currentIndex < displayQuestions.length - 1) {
                                     goNext(true); // 자동재생 모드에서 호출
@@ -1151,22 +1218,29 @@
                             }, 2000);
                         });
                     }, 500);
-                }, 2000);
+                }, 3000);
             });
         }
 
         function stopAutoPlay() {
             isAutoPlayMode = false;
+            isPaused = false;
             if (autoPlayTimer) {
                 clearTimeout(autoPlayTimer);
                 autoPlayTimer = null;
             }
             stopAllSpeech();
             releaseWakeLock(); // Wake Lock 해제
+            stopKeepAliveAudio(); // 무음 오디오 중지
 
             var autoplayBtn = document.getElementById('autoplayBtn');
             if (autoplayBtn) {
                 autoplayBtn.classList.remove('active-autoplay');
+            }
+
+            var pauseContainer = document.getElementById('pauseContainer');
+            if (pauseContainer) {
+                pauseContainer.style.display = 'none';
             }
         }
 
@@ -1174,15 +1248,59 @@
             isAutoPlayMode = !isAutoPlayMode;
 
             var autoplayBtn = document.getElementById('autoplayBtn');
+            var pauseContainer = document.getElementById('pauseContainer');
+
             if (isAutoPlayMode) {
                 if (autoplayBtn) autoplayBtn.classList.add('active-autoplay');
+                if (pauseContainer) pauseContainer.style.display = 'flex';
+                isPaused = false;
+                updatePauseButton();
                 requestWakeLock(); // Wake Lock 활성화
-                showToast('자동 재생 시작');
+                startKeepAliveAudio(); // 무음 오디오 시작 (화면 꺼짐 방지)
+                showToast('자동 재생 시작 (화면 꺼짐 방지 활성화)');
                 startAutoPlay();
             } else {
                 if (autoplayBtn) autoplayBtn.classList.remove('active-autoplay');
+                if (pauseContainer) pauseContainer.style.display = 'none';
                 stopAutoPlay();
                 showToast('자동 재생 정지');
+            }
+        }
+
+        function togglePause() {
+            if (!isAutoPlayMode) return;
+
+            isPaused = !isPaused;
+
+            if (isPaused) {
+                // 일시정지
+                if (autoPlayTimer) {
+                    clearTimeout(autoPlayTimer);
+                    autoPlayTimer = null;
+                }
+                stopAllSpeech();
+                stopKeepAliveAudio(); // 무음 오디오도 일시정지
+                showToast('일시정지');
+            } else {
+                // 재개
+                startKeepAliveAudio(); // 무음 오디오 재개
+                showToast('재생 재개');
+                startAutoPlay();
+            }
+
+            updatePauseButton();
+        }
+
+        function updatePauseButton() {
+            var pauseBtn = document.getElementById('pauseBtn');
+            if (!pauseBtn) return;
+
+            if (isPaused) {
+                pauseBtn.textContent = '▶️ Resume';
+                pauseBtn.classList.add('paused');
+            } else {
+                pauseBtn.textContent = '⏸ Pause';
+                pauseBtn.classList.remove('paused');
             }
         }
 
@@ -1585,6 +1703,7 @@
         document.getElementById('seniorOnlyBtn').addEventListener('click', handleToggleSeniorOnly);
         document.getElementById('wrongToggleBtn').addEventListener('click', toggleWrongForCurrentQuestion);
         document.getElementById('autoplayBtn').addEventListener('click', toggleAutoPlay);
+        document.getElementById('pauseBtn').addEventListener('click', togglePause);
         document.getElementById('darkToggle').addEventListener('click', toggleDarkMode);
 
         // 질문 텍스트 클릭 시 다시 듣기
@@ -1666,16 +1785,24 @@
 
         // Wake Lock 관리 - 페이지를 떠날 때 해제
         document.addEventListener('visibilitychange', function() {
-            if (document.hidden && wakeLock !== null) {
+            if (document.hidden) {
                 // 페이지가 백그라운드로 가면 Wake Lock이 자동 해제됨
-                // 다시 포그라운드로 돌아왔을 때 자동 재생 중이면 재요청
-            } else if (!document.hidden && isAutoPlayMode && wakeLock === null) {
-                requestWakeLock();
+                // 무음 오디오는 계속 재생되어 백그라운드에서도 실행 유지
+            } else if (!document.hidden && isAutoPlayMode && !isPaused) {
+                // 포그라운드로 돌아왔을 때 자동 재생 중이면 재요청
+                if (wakeLock === null) {
+                    requestWakeLock();
+                }
+                // 무음 오디오가 중단되었으면 다시 시작
+                if (keepAliveAudio && keepAliveAudio.paused) {
+                    startKeepAliveAudio();
+                }
             }
         });
 
         window.addEventListener('beforeunload', function() {
             releaseWakeLock();
+            stopKeepAliveAudio();
         });
 
         // 초기화
