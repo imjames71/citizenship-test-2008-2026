@@ -592,6 +592,135 @@
             font-size: 12px;
             color: var(--text-sub);
         }
+
+        /* 음성 답변 섹션 */
+        .voice-answer-section {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 6px;
+        }
+
+        .btn-mic {
+            background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+            color: #ffffff;
+            box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+        }
+
+        .btn-mic.listening {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            animation: pulse 1.5s infinite;
+        }
+
+        .btn-mic:disabled {
+            background: var(--border-color);
+            color: var(--text-sub);
+            box-shadow: none;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+                transform: scale(1);
+            }
+            50% {
+                box-shadow: 0 4px 20px rgba(239, 68, 68, 0.6);
+                transform: scale(1.02);
+            }
+        }
+
+        .recognition-status {
+            text-align: center;
+            font-size: 14px;
+            color: var(--text-sub);
+            min-height: 24px;
+            font-style: italic;
+            padding: 4px 8px;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+        }
+
+        .recognition-status.active {
+            color: #ef4444;
+            font-weight: 600;
+            background: rgba(239, 68, 68, 0.05);
+        }
+
+        body.dark-mode .recognition-status.active {
+            background: rgba(239, 68, 68, 0.15);
+        }
+
+        .answer-result {
+            background: var(--card-bg);
+            border: 2px solid var(--border-color);
+            border-radius: 14px;
+            padding: 16px;
+            display: none;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        .answer-result.show {
+            display: block;
+        }
+
+        .answer-result.correct {
+            border-color: #22c55e;
+            background: linear-gradient(135deg, rgba(34, 197, 94, 0.1), rgba(22, 163, 74, 0.05));
+        }
+
+        .answer-result.incorrect {
+            border-color: #ef4444;
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(220, 38, 38, 0.05));
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .result-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .result-header.correct {
+            color: #22c55e;
+        }
+
+        .result-header.incorrect {
+            color: #ef4444;
+        }
+
+        .result-text {
+            font-size: 14px;
+            color: var(--text-main);
+            margin-bottom: 8px;
+        }
+
+        .result-label {
+            font-size: 12px;
+            color: var(--text-sub);
+            font-weight: 600;
+            margin-top: 4px;
+        }
+
+        body.dark-mode .answer-result.correct {
+            background: rgba(34, 197, 94, 0.15);
+        }
+
+        body.dark-mode .answer-result.incorrect {
+            background: rgba(239, 68, 68, 0.15);
+        }
     </style>
 </head>
 <body>
@@ -646,6 +775,13 @@
                 <button class="btn btn-nav" id="prevBtn" disabled>◀ 이전</button>
                 <button class="btn btn-reveal" id="answerBtn">🔊 정답 듣기</button>
                 <button class="btn btn-nav" id="nextBtn">다음 ▶</button>
+            </div>
+
+            <!-- 음성 답변 버튼 -->
+            <div class="voice-answer-section">
+                <button class="btn btn-mic" id="micBtn">🎤 음성으로 답하기</button>
+                <div class="recognition-status" id="recognitionStatus"></div>
+                <div class="answer-result" id="answerResult"></div>
             </div>
 
             <!-- 통계 표시 영역 -->
@@ -859,6 +995,13 @@
         var isSpeakingAnswer = false;
         var wakeLock = null;
         var keepAliveAudio = null;
+
+        // 음성 인식 변수
+        var recognition = null;
+        var isListening = false;
+        var recognizedText = '';
+        var silenceTimer = null;
+        var finalTranscript = '';
 
         // 무음 오디오로 백그라운드에서 계속 실행 유지 (화면 꺼짐 방지)
         function createKeepAliveAudio() {
@@ -1304,6 +1447,305 @@
             }
         }
 
+        // ========== 음성 인식 기능 ==========
+
+        function initSpeechRecognition() {
+            try {
+                var SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                if (!SpeechRecognition) {
+                    console.log('Speech Recognition not supported');
+                    return false;
+                }
+
+                recognition = new SpeechRecognition();
+                recognition.lang = 'en-US';
+                recognition.continuous = true;  // 계속 듣기 모드
+                recognition.interimResults = true;  // 중간 결과도 받기
+                recognition.maxAlternatives = 1;
+
+                recognition.onstart = function() {
+                    isListening = true;
+                    finalTranscript = '';
+                    var micBtn = document.getElementById('micBtn');
+                    var statusEl = document.getElementById('recognitionStatus');
+
+                    if (micBtn) {
+                        micBtn.classList.add('listening');
+                        micBtn.textContent = '🔴 듣는 중... (말씀하세요)';
+                    }
+                    if (statusEl) {
+                        statusEl.textContent = 'Listening...';
+                        statusEl.classList.add('active');
+                    }
+                };
+
+                recognition.onresult = function(event) {
+                    var interimTranscript = '';
+
+                    // 모든 결과를 순회하여 최종 결과와 중간 결과 분리
+                    for (var i = event.resultIndex; i < event.results.length; i++) {
+                        var transcript = event.results[i][0].transcript;
+
+                        if (event.results[i].isFinal) {
+                            finalTranscript += transcript + ' ';
+                        } else {
+                            interimTranscript += transcript;
+                        }
+                    }
+
+                    // 상태 표시 업데이트 (사용자가 말한 내용 표시)
+                    var statusEl = document.getElementById('recognitionStatus');
+                    if (statusEl) {
+                        var displayText = (finalTranscript + interimTranscript).trim();
+                        if (displayText.length > 0) {
+                            statusEl.textContent = '"' + displayText + '"';
+                        }
+                    }
+
+                    // 침묵 타이머 리셋 - 말을 할 때마다 타이머 초기화
+                    if (silenceTimer) {
+                        clearTimeout(silenceTimer);
+                    }
+
+                    // 1.5초 침묵 후 자동 종료
+                    silenceTimer = setTimeout(function() {
+                        if (recognition && isListening) {
+                            recognition.stop();
+                        }
+                    }, 1500);
+                };
+
+                recognition.onerror = function(event) {
+                    console.error('Recognition error:', event.error);
+
+                    // no-speech 에러는 무시 (자연스러운 침묵)
+                    if (event.error === 'no-speech') {
+                        // 이미 말한 내용이 있으면 처리
+                        if (finalTranscript.trim().length > 0) {
+                            recognizedText = finalTranscript.trim();
+                            checkAnswer(recognizedText);
+                        } else {
+                            showToast('음성이 감지되지 않았습니다');
+                        }
+                        stopListening();
+                        return;
+                    }
+
+                    stopListening();
+
+                    if (event.error === 'not-allowed') {
+                        showToast('마이크 권한이 필요합니다');
+                    } else if (event.error !== 'aborted') {
+                        showToast('음성 인식 오류: ' + event.error);
+                    }
+                };
+
+                recognition.onend = function() {
+                    // 최종 결과가 있으면 정답 체크
+                    if (finalTranscript.trim().length > 0) {
+                        recognizedText = finalTranscript.trim();
+                        console.log('Final recognized:', recognizedText);
+                        checkAnswer(recognizedText);
+                    }
+
+                    stopListening();
+                };
+
+                return true;
+            } catch (e) {
+                console.error('Speech Recognition init error:', e);
+                return false;
+            }
+        }
+
+        function startListening() {
+            if (!recognition) {
+                var initialized = initSpeechRecognition();
+                if (!initialized) {
+                    showToast('음성 인식을 지원하지 않는 브라우저입니다');
+                    return;
+                }
+            }
+
+            if (isListening) {
+                recognition.stop();
+                return;
+            }
+
+            // 기존 결과 숨기기
+            var resultEl = document.getElementById('answerResult');
+            if (resultEl) {
+                resultEl.classList.remove('show');
+            }
+
+            try {
+                recognizedText = '';
+                finalTranscript = '';
+
+                // 침묵 타이머 정리
+                if (silenceTimer) {
+                    clearTimeout(silenceTimer);
+                    silenceTimer = null;
+                }
+
+                recognition.start();
+            } catch (e) {
+                console.error('Recognition start error:', e);
+                showToast('음성 인식 시작 실패');
+            }
+        }
+
+        function stopListening() {
+            isListening = false;
+
+            // 침묵 타이머 정리
+            if (silenceTimer) {
+                clearTimeout(silenceTimer);
+                silenceTimer = null;
+            }
+
+            var micBtn = document.getElementById('micBtn');
+            var statusEl = document.getElementById('recognitionStatus');
+
+            if (micBtn) {
+                micBtn.classList.remove('listening');
+                micBtn.textContent = '🎤 음성으로 답하기';
+            }
+            if (statusEl) {
+                statusEl.textContent = '';
+                statusEl.classList.remove('active');
+            }
+        }
+
+        function normalizeAnswerText(text) {
+            // HTML 태그 제거
+            text = text.replace(/<[^>]*>/g, ' ');
+            // 특수문자 제거
+            text = text.replace(/[•\[\]\(\)]/g, ' ');
+            // 연속 공백 정리
+            text = text.replace(/\s+/g, ' ');
+            // 소문자로 변환
+            text = text.toLowerCase().trim();
+            return text;
+        }
+
+        function extractAnswerOptions(answerHtml) {
+            // <br> 또는 줄바꿈으로 분리
+            var lines = answerHtml.split(/<br\s*\/?>|\n/i);
+            var options = [];
+
+            for (var i = 0; i < lines.length; i++) {
+                var line = normalizeAnswerText(lines[i]);
+                if (line.length > 0) {
+                    options.push(line);
+                }
+            }
+
+            return options;
+        }
+
+        function checkAnswerMatch(userText, correctOptions) {
+            userText = normalizeAnswerText(userText);
+
+            // 각 정답 옵션에 대해 체크
+            for (var i = 0; i < correctOptions.length; i++) {
+                var option = correctOptions[i];
+
+                // 핵심 키워드 추출 (3글자 이상 단어)
+                var keywords = option.split(' ').filter(function(word) {
+                    return word.length >= 3;
+                });
+
+                // 키워드가 하나라도 있으면 체크
+                if (keywords.length > 0) {
+                    var matchCount = 0;
+                    for (var k = 0; k < keywords.length; k++) {
+                        if (userText.indexOf(keywords[k]) !== -1) {
+                            matchCount++;
+                        }
+                    }
+
+                    // 키워드의 50% 이상 매칭되면 정답
+                    if (matchCount / keywords.length >= 0.5) {
+                        return true;
+                    }
+                } else {
+                    // 키워드가 없으면 직접 비교
+                    if (userText.indexOf(option) !== -1 || option.indexOf(userText) !== -1) {
+                        return true;
+                    }
+                }
+            }
+
+            return false;
+        }
+
+        function checkAnswer(userAnswer) {
+            if (!displayQuestions || displayQuestions.length === 0) return;
+            var current = displayQuestions[currentIndex];
+            if (!current) return;
+
+            var correctOptions = extractAnswerOptions(current.answer);
+            var isCorrect = checkAnswerMatch(userAnswer, correctOptions);
+
+            displayAnswerResult(userAnswer, current.answer, isCorrect);
+        }
+
+        function displayAnswerResult(userAnswer, correctAnswer, isCorrect) {
+            var resultEl = document.getElementById('answerResult');
+            if (!resultEl) return;
+
+            var current = displayQuestions[currentIndex];
+            if (!current) return;
+
+            var headerClass = isCorrect ? 'correct' : 'incorrect';
+            var headerIcon = isCorrect ? '✅' : '❌';
+            var headerText = isCorrect ? '정답입니다!' : '다시 생각해보세요';
+
+            var html = '<div class="result-header ' + headerClass + '">' +
+                       headerIcon + ' ' + headerText +
+                       '</div>' +
+                       '<div class="result-label">당신의 답변:</div>' +
+                       '<div class="result-text">"' + userAnswer + '"</div>';
+
+            if (!isCorrect) {
+                // 오답일 경우 정답 표시
+                var cleanAnswer = correctAnswer.replace(/<br\s*\/?>/gi, ', ')
+                                              .replace(/<[^>]*>/g, '')
+                                              .replace(/[•\[\]\(\)]/g, '');
+                html += '<div class="result-label">정답:</div>' +
+                        '<div class="result-text">' + cleanAnswer + '</div>';
+
+                // 오답 목록에 자동 추가
+                if (wrongQuestionIds.indexOf(current.id) === -1) {
+                    wrongQuestionIds.push(current.id);
+                    saveWrongIds();
+                    showToast('❌ 오답으로 저장되었습니다');
+                } else {
+                    showToast('다시 시도해보세요');
+                }
+            } else {
+                // 정답이면 오답 목록에서 제거
+                var idx = wrongQuestionIds.indexOf(current.id);
+                if (idx !== -1) {
+                    wrongQuestionIds.splice(idx, 1);
+                    saveWrongIds();
+                    showToast('🎉 정답! 오답 목록에서 제거되었습니다');
+                } else {
+                    showToast('🎉 정답입니다!');
+                }
+            }
+
+            resultEl.innerHTML = html;
+            resultEl.className = 'answer-result show ' + (isCorrect ? 'correct' : 'incorrect');
+
+            // 정답 카드도 표시
+            document.getElementById('answerCard').classList.add('visible');
+
+            // 통계 업데이트
+            updateStatsFooter();
+        }
+
         // 다크 모드 토글
         function toggleDarkMode() {
             isDarkMode = !isDarkMode;
@@ -1422,6 +1864,19 @@
                 stopAllSpeech();
                 // 자동재생 중이 아닐 때만 정지 (자동재생 중에는 계속 진행)
                 // stopAutoPlay는 사용자가 수동으로 버튼을 클릭할 때만 호출
+
+                // 음성 인식 결과 초기화
+                if (recognition && isListening) {
+                    recognition.stop();
+                }
+                if (silenceTimer) {
+                    clearTimeout(silenceTimer);
+                    silenceTimer = null;
+                }
+                var resultEl = document.getElementById('answerResult');
+                if (resultEl) {
+                    resultEl.classList.remove('show');
+                }
 
                 if (!displayQuestions || displayQuestions.length === 0) {
                     document.getElementById('questionNumber').textContent = 'Q.-';
@@ -1722,6 +2177,11 @@
             performSearch(keyword);
         });
 
+        // 마이크 버튼
+        document.getElementById('micBtn').addEventListener('click', function() {
+            startListening();
+        });
+
         // 키보드 단축키
         document.addEventListener('keydown', function(e) {
             if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
@@ -1813,6 +2273,22 @@
 
         document.getElementById('randomBtn').classList.add('active');
         renderCurrentQuestion(false); // 초기 로드 시에는 자동 재생하지 않음 (iOS 제약)
+
+        // 음성 인식 지원 체크
+        (function checkSpeechRecognitionSupport() {
+            var SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            var micBtn = document.getElementById('micBtn');
+
+            if (!SpeechRecognition) {
+                if (micBtn) {
+                    micBtn.disabled = true;
+                    micBtn.textContent = '🎤 음성 인식 미지원';
+                }
+                console.log('Speech Recognition not supported in this browser');
+            } else {
+                console.log('Speech Recognition is available');
+            }
+        })();
     </script>
 </body>
 </html>
