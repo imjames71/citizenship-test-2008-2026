@@ -1459,15 +1459,25 @@
 
                 recognition = new SpeechRecognition();
                 recognition.lang = 'en-US';
-                recognition.continuous = true;  // 계속 듣기 모드
-                recognition.interimResults = true;  // 중간 결과도 받기
+
+                // iOS 감지
+                var isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+                           (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+
+                // iOS에서는 continuous를 false로 설정해야 더 안정적
+                recognition.continuous = !isIOS;
+                recognition.interimResults = !isIOS;  // iOS에서는 interimResults도 false로
                 recognition.maxAlternatives = 1;
+
+                console.log('iOS detected:', isIOS);
 
                 recognition.onstart = function() {
                     isListening = true;
                     finalTranscript = '';
                     var micBtn = document.getElementById('micBtn');
                     var statusEl = document.getElementById('recognitionStatus');
+
+                    console.log('Recognition started successfully');
 
                     if (micBtn) {
                         micBtn.classList.add('listening');
@@ -1480,11 +1490,14 @@
                 };
 
                 recognition.onresult = function(event) {
+                    console.log('Recognition result received:', event.results.length);
+
                     var interimTranscript = '';
 
                     // 모든 결과를 순회하여 최종 결과와 중간 결과 분리
                     for (var i = event.resultIndex; i < event.results.length; i++) {
                         var transcript = event.results[i][0].transcript;
+                        console.log('Result', i, ':', transcript, 'isFinal:', event.results[i].isFinal);
 
                         if (event.results[i].isFinal) {
                             finalTranscript += transcript + ' ';
@@ -1502,21 +1515,26 @@
                         }
                     }
 
+                    // iOS에서는 continuous가 false이므로 침묵 타이머를 더 짧게
+                    var isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+                               (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+
                     // 침묵 타이머 리셋 - 말을 할 때마다 타이머 초기화
                     if (silenceTimer) {
                         clearTimeout(silenceTimer);
                     }
 
-                    // 1.5초 침묵 후 자동 종료
+                    // iOS는 자동으로 빨리 종료되므로 타이머를 더 짧게 설정
+                    var silenceDelay = isIOS ? 1000 : 1500;
                     silenceTimer = setTimeout(function() {
                         if (recognition && isListening) {
                             recognition.stop();
                         }
-                    }, 1500);
+                    }, silenceDelay);
                 };
 
                 recognition.onerror = function(event) {
-                    console.error('Recognition error:', event.error);
+                    console.error('Recognition error:', event.error, 'message:', event.message || 'no message');
 
                     // no-speech 에러는 무시 (자연스러운 침묵)
                     if (event.error === 'no-speech') {
@@ -1533,8 +1551,12 @@
 
                     stopListening();
 
-                    if (event.error === 'not-allowed') {
-                        showToast('마이크 권한이 필요합니다');
+                    if (event.error === 'not-allowed' || event.error === 'permission-denied') {
+                        showToast('마이크 권한이 필요합니다. 설정에서 허용해주세요.');
+                    } else if (event.error === 'network') {
+                        showToast('네트워크 오류. 인터넷 연결을 확인해주세요.');
+                    } else if (event.error === 'service-not-allowed') {
+                        showToast('음성 인식 서비스가 차단되었습니다.');
                     } else if (event.error !== 'aborted') {
                         showToast('음성 인식 오류: ' + event.error);
                     }
@@ -1559,6 +1581,8 @@
         }
 
         function startListening() {
+            console.log('startListening called');
+
             if (!recognition) {
                 var initialized = initSpeechRecognition();
                 if (!initialized) {
@@ -1568,6 +1592,7 @@
             }
 
             if (isListening) {
+                console.log('Already listening, stopping...');
                 recognition.stop();
                 return;
             }
@@ -1588,10 +1613,17 @@
                     silenceTimer = null;
                 }
 
+                // iOS 디버그 정보
+                var isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+                           (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+                console.log('Starting recognition on iOS:', isIOS);
+                console.log('Recognition settings - continuous:', recognition.continuous, 'interimResults:', recognition.interimResults);
+
                 recognition.start();
+                console.log('recognition.start() called');
             } catch (e) {
                 console.error('Recognition start error:', e);
-                showToast('음성 인식 시작 실패');
+                showToast('음성 인식 시작 실패: ' + e.message);
             }
         }
 
@@ -2279,14 +2311,33 @@
             var SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
             var micBtn = document.getElementById('micBtn');
 
+            var isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+                       (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+            var isHTTPS = window.location.protocol === 'https:' || window.location.hostname === 'localhost';
+
+            console.log('=== Speech Recognition Support Check ===');
+            console.log('Platform:', navigator.platform);
+            console.log('User Agent:', navigator.userAgent);
+            console.log('iOS detected:', isIOS);
+            console.log('HTTPS:', isHTTPS);
+            console.log('SpeechRecognition available:', !!SpeechRecognition);
+
             if (!SpeechRecognition) {
                 if (micBtn) {
                     micBtn.disabled = true;
-                    micBtn.textContent = '🎤 음성 인식 미지원';
+                    if (isIOS && !isHTTPS) {
+                        micBtn.textContent = '🎤 HTTPS 필요';
+                        console.log('iOS requires HTTPS for speech recognition');
+                    } else {
+                        micBtn.textContent = '🎤 음성 인식 미지원';
+                    }
                 }
                 console.log('Speech Recognition not supported in this browser');
             } else {
                 console.log('Speech Recognition is available');
+                if (isIOS) {
+                    console.log('iOS mode: continuous=false, interimResults=false for better compatibility');
+                }
             }
         })();
     </script>
