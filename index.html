@@ -601,6 +601,10 @@
             margin-top: 6px;
         }
 
+        .voice-answer-section.hidden {
+            display: none;
+        }
+
         .btn-mic {
             background: linear-gradient(135deg, #8b5cf6, #7c3aed);
             color: #ffffff;
@@ -2209,10 +2213,13 @@
             performSearch(keyword);
         });
 
-        // 마이크 버튼
-        document.getElementById('micBtn').addEventListener('click', function() {
-            startListening();
-        });
+        // 마이크 버튼 (존재할 때만 이벤트 등록)
+        var micBtn = document.getElementById('micBtn');
+        if (micBtn) {
+            micBtn.addEventListener('click', function() {
+                startListening();
+            });
+        }
 
         // 키보드 단축키
         document.addEventListener('keydown', function(e) {
@@ -2306,38 +2313,38 @@
         document.getElementById('randomBtn').classList.add('active');
         renderCurrentQuestion(false); // 초기 로드 시에는 자동 재생하지 않음 (iOS 제약)
 
-        // 음성 인식 지원 체크
+        // 음성 인식 지원 체크 및 iOS에서 숨기기
         (function checkSpeechRecognitionSupport() {
             var SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-            var micBtn = document.getElementById('micBtn');
+            var voiceSection = document.querySelector('.voice-answer-section');
 
             var isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
                        (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-            var isHTTPS = window.location.protocol === 'https:' || window.location.hostname === 'localhost';
+            var isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
             console.log('=== Speech Recognition Support Check ===');
             console.log('Platform:', navigator.platform);
             console.log('User Agent:', navigator.userAgent);
             console.log('iOS detected:', isIOS);
-            console.log('HTTPS:', isHTTPS);
+            console.log('Mobile detected:', isMobile);
             console.log('SpeechRecognition available:', !!SpeechRecognition);
 
-            if (!SpeechRecognition) {
-                if (micBtn) {
-                    micBtn.disabled = true;
-                    if (isIOS && !isHTTPS) {
-                        micBtn.textContent = '🎤 HTTPS 필요';
-                        console.log('iOS requires HTTPS for speech recognition');
-                    } else {
+            // iOS 또는 모바일 기기에서는 음성 답변 섹션 숨기기
+            if ((isIOS || isMobile) && voiceSection) {
+                voiceSection.classList.add('hidden');
+                console.log('Voice answer section hidden on mobile/iOS');
+            } else if (!SpeechRecognition) {
+                // PC에서 음성 인식을 지원하지 않는 경우
+                if (voiceSection) {
+                    var micBtn = voiceSection.querySelector('#micBtn');
+                    if (micBtn) {
+                        micBtn.disabled = true;
                         micBtn.textContent = '🎤 음성 인식 미지원';
                     }
                 }
                 console.log('Speech Recognition not supported in this browser');
             } else {
-                console.log('Speech Recognition is available');
-                if (isIOS) {
-                    console.log('iOS mode: continuous=false, interimResults=false for better compatibility');
-                }
+                console.log('Speech Recognition is available on PC');
             }
         })();
     </script>
